@@ -15,5 +15,10 @@ public class ConfigValues {
   public static final int LEFT = 2;
   /** Constant value representing right, like on a computer screen. */
   public static final int RIGHT = 3;
+
+  /** The size (both width and height) of path finding tiles. */
+  public static final int TILE_SIZE = 10;
+  /** The maximum length of a path found by the path finder. */
+  public static final int MAX_SEARCH_DEPTH = 1000;
   
 }

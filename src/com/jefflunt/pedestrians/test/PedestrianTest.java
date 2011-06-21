@@ -19,6 +19,15 @@ public class PedestrianTest {
   }
   
   @Test
+  public void expandingThePathThatAPedestrianFollowsWorksAsExpected() {
+    Path compressedPath = new Path();
+    compressedPath.appendStep(1, 1);
+    simon.headAlongPath(compressedPath, Pedestrian.WALKING_SPEED, true);
+    assertEquals(ConfigValues.TILE_SIZE, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(ConfigValues.TILE_SIZE, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+  }
+  
+  @Test
   public void addingAStepToThePathWorks() {
     assertFalse(simon.isOnAPathSomewhere());
     simon.addStepToPath(100, 0);  // distance of 100 to end of path
