@@ -27,6 +27,7 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
     simon = new Pedestrian(400, 300, container);
     blockingMap = new boolean[container.getWidth()/ConfigValues.TILE_SIZE][container.getHeight()/ConfigValues.TILE_SIZE];
     pathFinder = new AStarPathFinder(this, ConfigValues.MAX_SEARCH_DEPTH, true);
+    randomizeObstacles(); 
   }
 
   @Override
@@ -64,6 +65,27 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
       blockingMap[blockX][blockY] = false;
     }
     
+    if (!simon.isOnAPathSomewhere()) {
+      
+      int randX;
+      int randY;
+      double distancetoWanderTarget;
+      
+      do {
+        randX = (int) (Math.random() * getWidthInTiles());
+        randY = (int) (Math.random() * getHeightInTiles());
+        distancetoWanderTarget = Math.hypot((simon.getCenterX()/ConfigValues.TILE_SIZE)-randX, (simon.getCenterY()/ConfigValues.TILE_SIZE)-randY);
+      } while (distancetoWanderTarget > 20);
+      
+      simon.headAlongPath(pathFinder.findPath(simon, 
+                                              (int) simon.getCenterX()/ConfigValues.TILE_SIZE,
+                                              (int)simon.getCenterY()/ConfigValues.TILE_SIZE, 
+                                              randX, 
+                                              randY), 
+                                              Pedestrian.WALKING_SPEED, 
+                                              true);
+    }
+    
     simon.move(delta);
   }
   
@@ -93,9 +115,32 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
   }
   
   public void randomizeObstacles() {
-    for (int x = 0; x < blockingMap.length; x++) {
-      for (int y = 0; y < blockingMap[0].length; y++) {
-        blockingMap[x][y] = ((int) (Math.random() * 2)) == 1;
+    blockingMap = new boolean[getWidthInTiles()][getHeightInTiles()];
+    for (int x = 4; x < blockingMap.length-4; x++) {
+      for (int y = 4; y < blockingMap[0].length-4; y++) {
+        int blockSize = ((int) (Math.random() * 20));
+        switch (blockSize) {
+          case 1:
+            blockingMap[x][y] = true;
+            break;
+          case 2:
+            blockingMap[x][y] = true;
+            blockingMap[x+1][y] = true;
+            blockingMap[x][y+1] = true;
+            blockingMap[x+1][y+1] = true;
+            break;
+          case 3:
+            blockingMap[x][y] = true;
+            blockingMap[x+1][y] = true;
+            blockingMap[x][y+1] = true;
+            blockingMap[x+1][y+1] = true;
+            blockingMap[x+2][y] = true;
+            blockingMap[x+2][y+1] = true;
+            blockingMap[x+2][y+2] = true;
+            blockingMap[x+1][y+2] = true;
+            blockingMap[x][y+2] = true;
+            break;
+        }
       }
     }
   }
