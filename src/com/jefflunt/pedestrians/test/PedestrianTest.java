@@ -23,8 +23,8 @@ public class PedestrianTest {
     Path compressedPath = new Path();
     compressedPath.appendStep(1, 1);
     simon.headAlongPath(compressedPath, Pedestrian.WALKING_SPEED, true);
-    assertEquals(ConfigValues.TILE_SIZE, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(ConfigValues.TILE_SIZE, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(15, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(15, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test
