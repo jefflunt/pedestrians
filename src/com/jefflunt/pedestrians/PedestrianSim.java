@@ -102,7 +102,7 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
 
   @Override
   public boolean blocked(PathFindingContext context, int x, int y) {
-    if ((x < 0) || (y < 0) || (x > getWidthInTiles()) || (y > getHeightInTiles()))
+    if ((x < 0) || (y < 0) || (x >= getWidthInTiles()) || (y >= getHeightInTiles()))
       return true;
     else
       return blockingMap[x][y];
