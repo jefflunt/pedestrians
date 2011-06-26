@@ -15,6 +15,14 @@ public class ConfigValues {
   public static final int LEFT = 2;
   /** Constant value representing right, like on a computer screen. */
   public static final int RIGHT = 3;
+  /** Constant value representing up and to the left, like on a computer screen. */
+  public static final int UP_LEFT = 4;
+  /** Constant value representing up and to the right, like on a computer screen. */
+  public static final int UP_RIGHT = 5;
+  /** Constant value representing down and to the left, like on a computer screen. */
+  public static final int DOWN_LEFT = 6;
+  /** Constant value representing down and to the right, like on a computer screen. */
+  public static final int DOWN_RIGHT = 7;
 
   /** The size (both width and height) of path finding tiles. */
   public static final int TILE_SIZE = 10;

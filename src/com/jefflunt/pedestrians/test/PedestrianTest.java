@@ -19,6 +19,33 @@ public class PedestrianTest {
   }
   
   @Test
+  public void aPedestrianKnowsTheBasicDirectionInWhichTheyAreHeading() {
+    simon.headDirection(ConfigValues.UP, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.UP, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.DOWN, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.DOWN, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.LEFT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.LEFT, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.RIGHT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.RIGHT, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.UP_LEFT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.UP_LEFT, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.UP_RIGHT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.UP_RIGHT, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.DOWN_LEFT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.DOWN_LEFT, simon.getPrimaryDirection());
+    
+    simon.headDirection(ConfigValues.DOWN_RIGHT, Pedestrian.WALKING_SPEED);
+    assertEquals(ConfigValues.DOWN_RIGHT, simon.getPrimaryDirection());
+  }
+  
+  @Test
   public void expandingThePathThatAPedestrianFollowsWorksAsExpected() {
     Path compressedPath = new Path();
     compressedPath.appendStep(1, 1);
@@ -135,8 +162,20 @@ public class PedestrianTest {
     // 315-degree angle (the opposite direction of 45 degrees)
     simon.headToward(-50, -50, Pedestrian.WALKING_SPEED);
     assertEquals(-50, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(-50,  simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(-50, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     assertEquals(3.9269, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    
+    // RIGHT
+    simon.headToward(50, 0, Pedestrian.WALKING_SPEED);
+    assertEquals(50, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(0,  simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(0, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+     
+    // UP
+    simon.headToward(0, -50, Pedestrian.WALKING_SPEED);
+    assertEquals(0,   simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(-50, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(4.7124, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
 }

@@ -1,5 +1,7 @@
 package com.jefflunt.pedestrians;
 
+import java.awt.Point;
+
 import org.newdawn.slick.Color;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
@@ -78,10 +80,140 @@ public class Pedestrian extends Circle implements Renderable, Mover {
           headToward(targetPath.getX(targetPathIndex), targetPath.getY(targetPathIndex), getSpeed());
       }
     } else {
-      setCenterX(getCenterX() + deltaX);
-      setCenterY(getCenterY() + deltaY);
+      float proposedX = getCenterX() + deltaX;
+      float proposedY = getCenterY() + deltaY;
+      if (!PedestrianSim.getGlobalMap().blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
+        setCenterX(getCenterX() + deltaX);
+        setCenterY(getCenterY() + deltaY);
+      } else { // i.e. if we're blocked, try to steer around it
+        steerTowardNearbyOpenTile();
+      }
     }
   }
+  
+  private void steerTowardNearbyOpenTile() {
+    if (isTileOpenToTheLeft() && isTileOpenToTheRight()) {
+      int coinFlip = (int)(Math.random()*2);
+      if (coinFlip == 0) {
+        dodgeLeft();
+      } else {
+        dodgeRight();
+      }
+    } else if (isTileOpenToTheLeft()) {
+      dodgeLeft();
+    } else if (isTileOpenToTheRight()) {
+      dodgeRight();
+    }
+  }
+  
+  private void dodgeLeft() {
+    Point dodgeTargetPoint = getCoordinatesOfTileToTheLeft();
+    
+    headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
+  }
+  
+  private void dodgeRight() {
+    Point dodgeTargetPoint = getCoordinatesOfTileToTheRight();
+    
+    headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
+  }
+  
+  private boolean isTileOpenToTheLeft() {
+    Point blockToTheLeft = getCoordinatesOfTileToTheLeft();
+    
+    return (!PedestrianSim.getGlobalMap().blocked(null, blockToTheLeft.x, blockToTheLeft.y));
+  }
+  
+  private boolean isTileOpenToTheRight() {
+    Point blockToTheRight = getCoordinatesOfTileToTheRight();
+    
+    return (!PedestrianSim.getGlobalMap().blocked(null, blockToTheRight.x, blockToTheRight.y));
+  }
+  
+  private Point getCoordinatesOfTileToTheLeft() {
+    int considerationBlockX = 0;
+    int considerationBlockY = 0;
+    
+    switch (getPrimaryDirection()) {
+      case ConfigValues.UP:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.DOWN:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+      case ConfigValues.LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+      case ConfigValues.RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.UP_LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
+        break;
+      case ConfigValues.UP_RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.DOWN_LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+      case ConfigValues.DOWN_RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
+        break;
+    }
+    
+    return (new Point(considerationBlockX, considerationBlockY));
+  }
+  
+  private Point getCoordinatesOfTileToTheRight() {
+    int considerationBlockX = 0;
+    int considerationBlockY = 0;
+    
+    switch (getPrimaryDirection()) {
+      case ConfigValues.UP:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.DOWN:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+      case ConfigValues.LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+      case ConfigValues.UP_LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
+        break;
+      case ConfigValues.UP_RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
+        break;
+      case ConfigValues.DOWN_LEFT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
+        break;
+      case ConfigValues.DOWN_RIGHT:
+        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
+        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
+        break;
+    }
+    
+    return (new Point(considerationBlockX, considerationBlockY));
+  }
+  
   
   /** The distance, from the Pedestrian's current location, along the Path they are following, to the end
    * of the Path. It should be noted that this is an approximation. Due to various Pedestrian behaviors
@@ -313,11 +445,52 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       case ConfigValues.RIGHT:
         headToward(Float.MAX_VALUE, getCenterY(), speed);
         break;
+      case ConfigValues.UP_LEFT:
+        headToward(-Float.MAX_VALUE, -Float.MAX_VALUE, speed);
+        break;
+      case ConfigValues.UP_RIGHT:
+        headToward(Float.MAX_VALUE, -Float.MAX_VALUE, speed);
+        break;
+      case ConfigValues.DOWN_LEFT:
+        headToward(-Float.MAX_VALUE, Float.MAX_VALUE, speed);
+        break;
+      case ConfigValues.DOWN_RIGHT:
+        headToward(Float.MAX_VALUE, Float.MAX_VALUE, speed);
+        break;
     }
   }
   
   public float getDirection() {
     return direction;
+  }
+  
+  /** Returns the primary direction that this pedestrian is heading in. It is not necessary that a Pedestrian be heading
+   * precisely in that direction. This method is simply supposed to tell you something like, "They're basically heading to the right."
+   * or "They're basically heading up, and to the right", etc.
+   * 
+   * @return one of UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT
+   */
+  public int getPrimaryDirection() {
+    int primaryDirection = 666;
+    
+    if ((direction > 0.392699082) && (direction <= 1.17809725))
+      primaryDirection = ConfigValues.DOWN_RIGHT;
+    else if ((direction > 1.17809725) && (direction <= 1.96349541))
+      primaryDirection = ConfigValues.DOWN;
+    else if ((direction > 1.96349541) && (direction <= 2.74889358))
+      primaryDirection = ConfigValues.DOWN_LEFT;
+    else if ((direction > 2.74889358) && (direction <= 3.53429174))
+      primaryDirection = ConfigValues.LEFT;
+    else if ((direction > 3.53429174) && (direction <= 4.3196899))
+      primaryDirection = ConfigValues.UP_LEFT;
+    else if ((direction > 4.3196899)  && (direction <= 5.10508807))
+      primaryDirection = ConfigValues.UP;
+    else if ((direction > 5.10508807) && (direction <= 5.89048623))
+      primaryDirection = ConfigValues.UP_RIGHT;
+    else
+      primaryDirection = ConfigValues.RIGHT;
+    
+    return primaryDirection;
   }
   
   public float getSpeed() {
@@ -340,10 +513,15 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     float deltaY = targetY-getCenterY();
     
     direction = (float) Math.atan(deltaY/deltaX);
-    if (deltaX < 0)
-      direction += Math.PI;      // Second quadrant
-    else if (deltaX > 0 && deltaY < 0)
-      direction += Math.PI*2.0;  // Fourth quadrand
+    if (deltaX < 0)                     // Second and third quadrants
+      direction += Math.PI;
+    else if (deltaX > 0 && deltaY < 0)  // Fourth quadrant
+      direction += Math.PI*2.0;
+    
+    if (direction < 0)
+      direction += Math.PI*2;
+    if (direction > Math.PI*2)
+      direction -= Math.PI*2;
   }
   
   private void setCurrSpeed(float speed) {

@@ -18,8 +18,15 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
   private boolean blockingMap[][];
   private AStarPathFinder pathFinder;
   
+  private static TileBasedMap tileMap;
+  
   public PedestrianSim(String title) {
     super(title);
+    tileMap = this;
+  }
+  
+  public static TileBasedMap getGlobalMap() {
+    return tileMap;
   }
   
   @Override
@@ -66,7 +73,6 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
     }
     
     if (!simon.isOnAPathSomewhere()) {
-      
       int randX;
       int randY;
       double distancetoWanderTarget;
@@ -75,7 +81,7 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
         randX = (int) (Math.random() * getWidthInTiles());
         randY = (int) (Math.random() * getHeightInTiles());
         distancetoWanderTarget = Math.hypot((simon.getCenterX()/ConfigValues.TILE_SIZE)-randX, (simon.getCenterY()/ConfigValues.TILE_SIZE)-randY);
-      } while (distancetoWanderTarget > 20);
+      } while (distancetoWanderTarget > 40);
       
       simon.headAlongPath(pathFinder.findPath(simon, 
                                               (int) simon.getCenterX()/ConfigValues.TILE_SIZE,
