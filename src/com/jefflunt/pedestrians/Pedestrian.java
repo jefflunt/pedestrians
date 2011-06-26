@@ -51,13 +51,25 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     this.container = container;
   }
   
+  /** Gets the Path the this Pedestrian is following.
+   * 
+   * @return the pPath that this Pedestrian is following.
+   */
   public Path getTargetPath() {
     return targetPath;
   }
   
+  /** Gets the index of the next point in the Path that this Pedestrian if following. That is, when a Pedestrian is following a Path,
+   * that Path is made up of many waypoints from the beginning to the end. As the Pedestrian traverses that that it moves from waypoint
+   * to waypoint, until it reaches the end of the Path. The index is zero-based, so if the Pedestrian is currently heading toward 
+   * the 17th waypoint in its Path, then this method will return 16.
+   * 
+   * @return the index of the next point along this Pedestrian's path.
+   */
   public int getTargetPathIndex() {
     return targetPathIndex;
   }
+  
   
   public int getNumberOfPointsInPath() {
     return targetPath.getLength();
