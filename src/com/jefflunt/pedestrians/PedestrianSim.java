@@ -6,26 +6,27 @@ import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFindingContext;
-import org.newdawn.slick.util.pathfinding.TileBasedMap;
+
+import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
+import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 
 /** The Pedestrian Simulation that handles logic, rendering, etc. */
-public class PedestrianSim extends BasicGame implements TileBasedMap {
+public class PedestrianSim extends BasicGame implements PedestrianTileBasedMap {
   
   private Pedestrian simon;
   private boolean blockingMap[][];
-  private AStarPathFinder pathFinder;
+  private PedestrianPathFinder pathFinder;
   
-  private static TileBasedMap tileMap;
+  private static PedestrianTileBasedMap tileMap;
   
   public PedestrianSim(String title) {
     super(title);
     tileMap = this;
   }
   
-  public static TileBasedMap getGlobalMap() {
+  public static PedestrianTileBasedMap getGlobalMap() {
     return tileMap;
   }
   
@@ -33,7 +34,7 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
   public void init(GameContainer container) throws SlickException {
     simon = new Pedestrian(400, 300, container);
     blockingMap = new boolean[container.getWidth()/ConfigValues.TILE_SIZE][container.getHeight()/ConfigValues.TILE_SIZE];
-    pathFinder = new AStarPathFinder(this, ConfigValues.MAX_SEARCH_DEPTH, true);
+    pathFinder = new PedestrianPathFinder(this, ConfigValues.MAX_SEARCH_DEPTH, true);
     randomizeObstacles(); 
   }
 
@@ -150,13 +151,18 @@ public class PedestrianSim extends BasicGame implements TileBasedMap {
       }
     }
   }
-
+  
   @Override
   public boolean blocked(PathFindingContext context, int x, int y) {
     if ((x < 0) || (y < 0) || (x >= getWidthInTiles()) || (y >= getHeightInTiles()))
       return true;
     else
       return blockingMap[x][y];
+  }
+  
+  @Override
+  public boolean diagonallyBlocked(PathFindingContext context, int currentX, int currentY, int evalX, int evalY) {
+    return (blocked(context, currentX, evalY) && blocked(context, evalX, currentY));
   }
 
   @Override
