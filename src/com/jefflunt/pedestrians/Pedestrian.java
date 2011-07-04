@@ -10,7 +10,14 @@ import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 
+import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
+
 public class Pedestrian extends Circle implements Renderable, Mover {
+  
+  /** The next unique ID in the queue. */
+  private static int nextUniqueID = 1;
+  /** The PedestrianTileBasedMap that all Pedestrians are moving on. */
+  private static PedestrianTileBasedMap TILE_MAP;
   
   private static final long serialVersionUID = 1202551036619728216L;
   /** The maximum distance from a target location at which a Pedestrian is considered to have arrived. */
@@ -36,6 +43,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private float targetY;
   private int targetPathIndex;
   private Path targetPath;
+  private int uniqueID;
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
@@ -47,7 +55,21 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetPathIndex = 0;
     targetPath = null;
     speed = STOPPED;
+    uniqueID = claimNextUniqueID();
     this.container = container;
+  }
+  
+  public static void setGlobalTileMap(PedestrianTileBasedMap pedMap) {
+    TILE_MAP = pedMap;
+  }
+  
+  public int getUniqueID() {
+    return uniqueID;
+  }
+  
+  /** Gets the next unique Pedestrian ID, as increments. */
+  private static int claimNextUniqueID() {
+    return nextUniqueID++;
   }
   
   /** Gets the Path the this Pedestrian is following.
@@ -93,9 +115,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     } else {
       float proposedX = getCenterX() + deltaX;
       float proposedY = getCenterY() + deltaY;
-      if (!PedestrianSim.getGlobalMap().blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
+      if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
         setCenterX(getCenterX() + deltaX);
         setCenterY(getCenterY() + deltaY);
+        TILE_MAP.temporarilyBlock(this, (int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE));
       } else { // i.e. if we're blocked, try to steer around it
         steerTowardNearbyOpenTile();
       }
@@ -131,14 +154,22 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   private boolean isTileOpenToTheLeft() {
     Point blockToTheLeft = getCoordinatesOfTileToTheLeft();
+    Point currentBlock = getCoordinatesOfCurrentBlock();
     
-    return (!PedestrianSim.getGlobalMap().blocked(null, blockToTheLeft.x, blockToTheLeft.y));
+    return ((!TILE_MAP.blocked(null, blockToTheLeft.x, blockToTheLeft.y)) &&
+            (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheLeft.x, blockToTheLeft.y)));
   }
   
   private boolean isTileOpenToTheRight() {
     Point blockToTheRight = getCoordinatesOfTileToTheRight();
+    Point currentBlock = getCoordinatesOfCurrentBlock();
     
-    return (!PedestrianSim.getGlobalMap().blocked(null, blockToTheRight.x, blockToTheRight.y));
+    return ((!TILE_MAP.blocked(null, blockToTheRight.x, blockToTheRight.y)) &&
+            (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheRight.x, blockToTheRight.y)));
+  }
+  
+  private Point getCoordinatesOfCurrentBlock() {
+    return (new Point((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)));
   }
   
   private Point getCoordinatesOfTileToTheLeft() {
