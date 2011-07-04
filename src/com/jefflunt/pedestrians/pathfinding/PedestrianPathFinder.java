@@ -24,7 +24,7 @@ public class PedestrianPathFinder implements PathFinder, PathFindingContext {
   private PriorityList open = new PriorityList();
   
   /** The map being searched */
-  private PedestrianTileBasedMap map;
+  private ExtendedTileBasedMap map;
   /** The maximum depth of search we're willing to accept before giving up */
   private int maxSearchDistance;
   
@@ -53,7 +53,7 @@ public class PedestrianPathFinder implements PathFinder, PathFindingContext {
    * @param maxSearchDistance The maximum depth we'll search before giving up
    * @param allowDiagMovement True if the search should try diaganol movement
    */
-  public PedestrianPathFinder(PedestrianTileBasedMap map, int maxSearchDistance, boolean allowDiagMovement) {
+  public PedestrianPathFinder(ExtendedTileBasedMap map, int maxSearchDistance, boolean allowDiagMovement) {
     this(map, maxSearchDistance, allowDiagMovement, new ClosestHeuristic());
   }
 
@@ -65,7 +65,7 @@ public class PedestrianPathFinder implements PathFinder, PathFindingContext {
    * @param maxSearchDistance The maximum depth we'll search before giving up
    * @param allowDiagMovement True if the search should try diagonal movement
    */
-  public PedestrianPathFinder(PedestrianTileBasedMap map, int maxSearchDistance, 
+  public PedestrianPathFinder(ExtendedTileBasedMap map, int maxSearchDistance, 
                boolean allowDiagMovement, AStarHeuristic heuristic) {
     this.heuristic = heuristic;
     this.map = map;

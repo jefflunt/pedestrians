@@ -129,19 +129,19 @@ public class PedestrianTest {
   
   @Test public void tellingAPedestrianToPauseSetsTheirSpeedToZeroButMakesThemBelieveTheyStillHaveSomewhereToGo() {
     simon.headToward(100, 100, Pedestrian.WALKING_SPEED);
-    assertEquals(Pedestrian.WALKING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.WALKING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     
     simon.pause();
-    assertEquals(Pedestrian.STOPPED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.STOPPED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     assertFalse(simon.hasReachedDestination());
   }
   
   @Test public void tellingAPedestrianToChangeSpeedWorks() {
     simon.headToward(100, 100, Pedestrian.WALKING_SPEED);
-    assertEquals(Pedestrian.WALKING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.WALKING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     
     simon.changeSpeedTo(Pedestrian.RUNNING_SPEED);
-    assertEquals(Pedestrian.RUNNING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.RUNNING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test public void tellingAPedestrianToStopWillSetTheirSpeedToZeroAndMakesThemBelieveThatTheyHaveArrivedAtTheirDestination() {

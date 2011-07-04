@@ -12,6 +12,7 @@ import org.newdawn.slick.util.pathfinding.Path;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 
+/** A class describing a Pedestrian that moves around the world. */
 public class Pedestrian extends Circle implements Renderable, Mover {
   
   /** The next unique ID in the queue. */
@@ -36,13 +37,22 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private GameContainer container;
   /** The direction of travel, in radians. */
   private float direction;
+  /** The target speed (not necessarily the current speed) at which the Pedestrian is traveling. */
+  private float targetSpeed;
   /** The speed of travel, in units/second. */
   private float speed;
   
+  /** The x-coordinate of the current target point. */
   private float targetX;
+  /** The y-coordinate of the current target point. */
   private float targetY;
-  private int targetPathIndex;
+  
+  /** The Path that this Pedestrian is following. */
   private Path targetPath;
+  /** The index of the current point in the Path this this Pedestrian is following. */
+  private int targetPathIndex;
+  
+  /** This Pedestrian's unique ID. */
   private int uniqueID;
   
   /** Creates a new Pedestrian */
@@ -54,15 +64,24 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetY = y;
     targetPathIndex = 0;
     targetPath = null;
+    targetSpeed = STOPPED;
     speed = STOPPED;
     uniqueID = claimNextUniqueID();
     this.container = container;
   }
   
+  /** Gets the PedestrianTileBasedMap that all Pedestrians will use.
+   * 
+   * @param pedMap the Pedestrian TileBasedMap that will become the new, global tile map.
+   */
   public static void setGlobalTileMap(PedestrianTileBasedMap pedMap) {
     TILE_MAP = pedMap;
   }
   
+  /** Gets this Pedestrian's unique ID.
+   * 
+   * @return the unique ID assigned to this Pedestrian.
+   */
   public int getUniqueID() {
     return uniqueID;
   }
@@ -91,7 +110,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return targetPathIndex;
   }
   
-  
+  /** Gets the total number of points in the Path that this Pedestrian is following.
+   * 
+   * @return the total number of points in this Pedestrian's path.
+   */
   public int getNumberOfPointsInPath() {
     return targetPath.getLength();
   }
@@ -118,14 +140,14 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
         setCenterX(getCenterX() + deltaX);
         setCenterY(getCenterY() + deltaY);
-        TILE_MAP.temporarilyBlock(this, (int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE));
-        TILE_MAP.temporarilyBlock(this, (int) (getTargetX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE));
+        TILE_MAP.getTileStateAt((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)).registerPedestrian(this);
       } else { // i.e. if we're blocked, try to steer around it
         steerTowardNearbyOpenTile();
       }
     }
   }
   
+  /** Tells this Pedestrian to find, and steer toward, a nearby open tile. */
   private void steerTowardNearbyOpenTile() {
     if (isTileOpenToTheLeft() && isTileOpenToTheRight()) {
       int coinFlip = (int)(Math.random()*2);
@@ -141,18 +163,24 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     }
   }
   
+  /** Tells this Pedestrian to dodge to the tile that is left of their current direction of travel. */
   private void dodgeLeft() {
     Point dodgeTargetPoint = getCoordinatesOfTileToTheLeft();
     
     headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
   }
   
+  /** Tells this Pedestrian to dodge to the tile that is right of their current direction of travel. */
   private void dodgeRight() {
     Point dodgeTargetPoint = getCoordinatesOfTileToTheRight();
     
     headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
   }
   
+  /** Gets whether or not the tile, to the left of the direction of travel, is blocked or not.
+   * 
+   * @return true if the tile to the left is open, false otherwise.
+   */
   private boolean isTileOpenToTheLeft() {
     Point blockToTheLeft = getCoordinatesOfTileToTheLeft();
     Point currentBlock = getCoordinatesOfCurrentBlock();
@@ -161,6 +189,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
             (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheLeft.x, blockToTheLeft.y)));
   }
   
+  /** Gets whether or not the tile, to the right of the direction of travel, is blocked or not.
+   * 
+   * @return true if the tile to the right is open, false otherwise.
+   */
   private boolean isTileOpenToTheRight() {
     Point blockToTheRight = getCoordinatesOfTileToTheRight();
     Point currentBlock = getCoordinatesOfCurrentBlock();
@@ -169,10 +201,18 @@ public class Pedestrian extends Circle implements Renderable, Mover {
             (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheRight.x, blockToTheRight.y)));
   }
   
+  /** Gets the (x, y) coordinate of the block that this Pedestrian currently occupies.
+   * 
+   * @return a Point, containing the (x, y) coordinates of the tile in which this Pedestrian currently resides.
+   */
   public Point getCoordinatesOfCurrentBlock() {
     return (new Point((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)));
   }
   
+  /** Gets the (x, y) coordinate of the block to the left of this Pedestrian's direction of travel.
+   * 
+   * @return a Point, containing the (x, y) coordinates of the tile to the left of this Pedestrian's direction of travel.
+   */
   private Point getCoordinatesOfTileToTheLeft() {
     int considerationBlockX = 0;
     int considerationBlockY = 0;
@@ -215,6 +255,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return (new Point(considerationBlockX, considerationBlockY));
   }
   
+  /** Gets the (x, y) coordinate of the block to the right of this Pedestrian's direction of travel.
+   * 
+   * @return a Point, containing the (x, y) coordinates of the tile to the right of this Pedestrian's direction of travel.
+   */
   private Point getCoordinatesOfTileToTheRight() {
     int considerationBlockX = 0;
     int considerationBlockY = 0;
@@ -291,9 +335,15 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return (targetPath != null);
   }
   
+  /** Sets a new target (x, y) for this Pedestrian.
+   * 
+   * @param x the x-coordinate of the new target location.
+   * @param y the y-coordinate of the new target location.
+   * @param speed the speed at which you'd like the Pedestrian to travel there.
+   */
   public void setNewTargetPoint(float x, float y, float speed) {
     setTargetLocation(x, y);
-    this.speed = speed;
+    this.targetSpeed = speed;
   }
   
   /** Tells the Pedestrian to head from their current location, along the specified Path.
@@ -394,6 +444,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public void pause() {
     speed = STOPPED;
+    targetSpeed = STOPPED;
   }
   
   /** Tells a Pedestrian to continue toward their destination, after pausing. If the Pedestrian
@@ -405,6 +456,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public void resume(float speed) {
     this.speed = speed;
+    this.targetSpeed = speed;
   }
   
   /** Causes the Pedestrian to stop, and forget where they were headed.
@@ -426,7 +478,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public void changeSpeedTo(float speed) {
     if (!hasReachedDestination())
-      this.speed = speed;
+      this.targetSpeed = speed;
   }
   
   /** Sends this Pedestrian from their current location, directly toward the specified point in space.
@@ -436,7 +488,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @param speed the speed at which to travel there.
    */
   public void headToward(float x, float y, float speed) {
-    setCurrSpeed(speed);
+    setTargetSpeed(speed);
     setTargetLocation(x, y);
   }
   
@@ -503,6 +555,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     }
   }
   
+  /** Gets the direction of travel of this Pedestrian, measured in radians.
+   * 
+   * @return the direction of travel, in radians.
+   */
   public float getDirection() {
     return direction;
   }
@@ -536,18 +592,43 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return primaryDirection;
   }
   
+  /** Gets this Pedestrian's current speed.
+   * 
+   * @return this Pedestrian's current speed.
+   */
   public float getSpeed() {
     return speed;
   }
   
+  /** Gets the target speed (the speed that the Pedestrian travels at, when there are no obstacles in the way).
+   * 
+   * @return the target speed for this Pedestrian.
+   */
+  public float getTargetSpeed() {
+    return targetSpeed;
+  }
+  
+  /** Gets the x-coordinate of this Pedestrian's current target location.
+   * 
+   * @return the x-coordinate of the location to which this Pedestrian is traveling.
+   */
   public float getTargetX() {
     return targetX;
   }
   
+  /** Gets the y-coordinate of this Pedestrian's current target location.
+   * 
+   * @return the y-coordinate of the location to which this Pedestrian is traveling.
+   */
   public float getTargetY() {
     return targetY;
   }
   
+  /** Sets this Pedestrian's new targetLocation.
+   * 
+   * @param x the x-coordinate of the new target location.
+   * @param y the y-coordinate of the new target location.
+   */
   private void setTargetLocation(float x, float y) {
     targetX = x;
     targetY = y;
@@ -567,33 +648,37 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       direction -= Math.PI*2;
   }
   
-  private void setCurrSpeed(float speed) {
-    this.speed = speed;
+  /** Changes the Pedestrian's speed to the specified speed.
+   * 
+   * @param speed the new specified speed for this Pedestrian.
+   */
+  private void setTargetSpeed(float speed) {
+    this.targetSpeed = speed;
   }
 
   @Override
   public void draw(float x, float y) {
     Graphics g = container.getGraphics();
     
-    if (isOnAPathSomewhere()) {
-      g.setColor(Color.blue);
-      g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
-      
-      for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
-        if (i % 2 == 0)
-          g.setColor(Color.cyan);
-        else
-          g.setColor(Color.orange);
-        g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
-      }
-      
-      g.setColor(Color.red);
-      g.fillOval(getTargetX(), getTargetY(), 2, 2);
-      
-    }
+//    if (isOnAPathSomewhere()) {
+//      g.setColor(Color.blue);
+//      g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
+//      
+//      for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
+//        if (i % 2 == 0)
+//          g.setColor(Color.cyan);
+//        else
+//          g.setColor(Color.orange);
+//        g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
+//      }
+//      
+//      g.setColor(Color.red);
+//      g.fillOval(getTargetX(), getTargetY(), 2, 2);
+//    }
     
     g.setColor(Color.white);
-    g.fillOval(x-radius, y-radius, 2*radius, 2*radius);
+    g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
+    g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
   }
 
 }

@@ -2,6 +2,8 @@ package com.jefflunt.pedestrians.test;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 import com.jefflunt.pedestrians.PedestrianSim;
 
@@ -16,9 +18,14 @@ public class PedestrianSimTest {
   }
   
   @Test
+  public void titleIsCorrectlySet() {
+    assertEquals("Test suite", pedSim.getTitle());
+  }
+  
+  @Test
   public void theBlockedMethodOfPedestrianSimTestHandlesOutOfBoundsParametersGracefully() {
     try {
-      pedSim.blocked(null, -1, -1);
+      PedestrianSim.getGlobalMap().blocked(null, -1, -1);
     } catch (Exception ex) {
       assumeNoException(ex);
     }
