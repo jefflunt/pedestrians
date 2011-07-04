@@ -119,6 +119,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
         setCenterX(getCenterX() + deltaX);
         setCenterY(getCenterY() + deltaY);
         TILE_MAP.temporarilyBlock(this, (int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE));
+        TILE_MAP.temporarilyBlock(this, (int) (getTargetX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE));
       } else { // i.e. if we're blocked, try to steer around it
         steerTowardNearbyOpenTile();
       }
@@ -168,7 +169,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
             (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheRight.x, blockToTheRight.y)));
   }
   
-  private Point getCoordinatesOfCurrentBlock() {
+  public Point getCoordinatesOfCurrentBlock() {
     return (new Point((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)));
   }
   
