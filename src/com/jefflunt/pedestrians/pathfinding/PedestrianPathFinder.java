@@ -15,7 +15,7 @@ import org.newdawn.slick.util.pathfinding.heuristics.ClosestHeuristic;
  * A path finder implementation that uses the AStar heuristic based algorithm
  * to determine a path. 
  * 
- * @author Kevin Glass
+ * @author Kevin Glass. Customized for Pedestrians by Jeff Lunt.
  */
 public class PedestrianPathFinder implements PathFinder, PathFindingContext {
   /** The set of nodes that have been searched through */

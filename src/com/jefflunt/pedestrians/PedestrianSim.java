@@ -6,7 +6,6 @@ import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.util.pathfinding.Path;
 import org.newdawn.slick.util.pathfinding.PathFindingContext;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
@@ -15,7 +14,7 @@ import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 /** The Pedestrian Simulation that handles logic, rendering, etc. */
 public class PedestrianSim extends BasicGame implements PedestrianTileBasedMap {
   
-  private Pedestrian simon;
+  private Pedestrian[] peds;
   private boolean blockingMap[][];
   private PedestrianPathFinder pathFinder;
   
@@ -32,68 +31,69 @@ public class PedestrianSim extends BasicGame implements PedestrianTileBasedMap {
   
   @Override
   public void init(GameContainer container) throws SlickException {
-    simon = new Pedestrian(400, 300, container);
     blockingMap = new boolean[container.getWidth()/ConfigValues.TILE_SIZE][container.getHeight()/ConfigValues.TILE_SIZE];
     pathFinder = new PedestrianPathFinder(this, ConfigValues.MAX_SEARCH_DEPTH, true);
-    randomizeObstacles(); 
+    randomizeObstacles();
+    peds = new Pedestrian[100];
+    int randomBlockX;
+    int randomBlockY;
+    for (int i = 0; i < peds.length; i++) {
+      do {
+        randomBlockX = (int)(Math.random()*tileMap.getWidthInTiles());
+        randomBlockY = (int)(Math.random()*tileMap.getHeightInTiles());
+        peds[i] = new Pedestrian((randomBlockX*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                                 (randomBlockY*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                                 container);
+      } while (blockingMap[randomBlockX][randomBlockY] == true);
+    }
   }
 
   @Override
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
-    if (input.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON)) {
-      if ((input.isKeyDown(Input.KEY_LALT)) || input.isKeyDown(Input.KEY_RALT)) {
-        Path newPath = pathFinder.findPath(simon, (int)simon.getCenterX()/ConfigValues.TILE_SIZE, (int)simon.getCenterY()/ConfigValues.TILE_SIZE, input.getMouseX()/ConfigValues.TILE_SIZE,  input.getMouseY()/ConfigValues.TILE_SIZE);
-        simon.headAlongPath(newPath, Pedestrian.WALKING_SPEED, true);
-      } else {
-        simon.addStepToPath(input.getMouseX(), input.getMouseY());
+    if (input.isKeyDown(Input.KEY_P)) {
+      for (Pedestrian ped : peds) {
+        ped.pause();
       }
-      
-      if (simon.getSpeed() == Pedestrian.STOPPED)
-        simon.changeSpeedTo(Pedestrian.WALKING_SPEED);
-    } else if (input.isKeyDown(Input.KEY_P)) {
-      simon.pause();
     } else if (input.isKeyDown(Input.KEY_R)) {
       randomizeObstacles();
-    } else if (input.isKeyDown(Input.KEY_S)) {
-      simon.stop();
     } else if (input.isKeyDown(Input.KEY_SPACE)) {
-      simon.resume(Pedestrian.WALKING_SPEED);
-    } else if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
-      simon.changeSpeedTo(Pedestrian.RUNNING_SPEED);
+      for (Pedestrian ped : peds) {
+        ped.resume(Pedestrian.WALKING_SPEED);
+      }
     } else if (input.isKeyDown(Input.KEY_O)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
-      
       blockingMap[blockX][blockY] = true;
     } else if (input.isKeyDown(Input.KEY_C)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
-      
       blockingMap[blockX][blockY] = false;
     }
     
-    if (!simon.isOnAPathSomewhere()) {
-      int randX;
-      int randY;
-      double distancetoWanderTarget;
-      
-      do {
-        randX = (int) (Math.random() * getWidthInTiles());
-        randY = (int) (Math.random() * getHeightInTiles());
-        distancetoWanderTarget = Math.hypot((simon.getCenterX()/ConfigValues.TILE_SIZE)-randX, (simon.getCenterY()/ConfigValues.TILE_SIZE)-randY);
-      } while (distancetoWanderTarget > 40);
-      
-      simon.headAlongPath(pathFinder.findPath(simon, 
-                                              (int) simon.getCenterX()/ConfigValues.TILE_SIZE,
-                                              (int)simon.getCenterY()/ConfigValues.TILE_SIZE, 
+    for (Pedestrian ped : peds) {
+      if (!ped.isOnAPathSomewhere()) {
+        int randX;
+        int randY;
+        double distancetoWanderTarget;
+        
+        do {
+          randX = (int) (Math.random() * getWidthInTiles());
+          randY = (int) (Math.random() * getHeightInTiles());
+          distancetoWanderTarget = Math.hypot((ped.getCenterX()/ConfigValues.TILE_SIZE)-randX, (ped.getCenterY()/ConfigValues.TILE_SIZE)-randY);
+        } while (distancetoWanderTarget > 40);
+        
+        ped.headAlongPath(pathFinder.findPath(ped, 
+                                              (int) ped.getCenterX()/ConfigValues.TILE_SIZE,
+                                              (int) ped.getCenterY()/ConfigValues.TILE_SIZE, 
                                               randX, 
                                               randY), 
                                               Pedestrian.WALKING_SPEED, 
                                               true);
+      }
+      
+      ped.move(delta);
     }
-    
-    simon.move(delta);
   }
   
   @Override
@@ -106,19 +106,11 @@ public class PedestrianSim extends BasicGame implements PedestrianTileBasedMap {
       }
     }
     
-    simon.draw(simon.getCenterX(), simon.getCenterY());
-    
-    g.drawString("p: " + (int)simon.getCenterX() + ", " + (int)simon.getCenterY() + 
-                 " -> " + (int)simon.getTargetX() + ", " + (int)simon.getTargetY(), 10, 30); 
-    g.drawString("@ " + simon.getSpeed() + " px/sec", 10, 45);
-    g.drawString("direction: " + simon.getDirection(), 10, 60);
-    
-    if (simon.getTargetPath() == null)
-      g.drawString("Path segment/length: 0/0", 10, 75);
-    else
-      g.drawString("Path segment/length: " + simon.getTargetPathIndex() + "/" + simon.getTargetPath().getLength(), 10, 75);
-    
-    g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 90);
+    for (Pedestrian ped : peds) {
+      ped.draw(ped.getCenterX(), ped.getCenterY());
+    }
+      
+    g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
   }
   
   public void randomizeObstacles() {

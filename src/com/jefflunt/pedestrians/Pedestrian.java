@@ -12,8 +12,7 @@ import org.newdawn.slick.util.pathfinding.Path;
 
 public class Pedestrian extends Circle implements Renderable, Mover {
   
-  private static final long serialVersionUID = -5203575025425812220L;
-  
+  private static final long serialVersionUID = 1202551036619728216L;
   /** The maximum distance from a target location at which a Pedestrian is considered to have arrived. */
   public static final float STOP_DISTNACE = 3;
   /** The default collision radius of the collision circles around Pedestrians. */
