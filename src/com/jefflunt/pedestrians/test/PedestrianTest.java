@@ -108,40 +108,17 @@ public class PedestrianTest {
     assertTrue(simon.hasReachedDestination());
     assertEquals(0, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
-  
-  @Test
-  public void tellingAPedestrianToResumeMakesThemContinueTowardTheirDesitnationUnlessTheyForgotWhereToGo() {
-    simon.headToward(100, 100, Pedestrian.WALKING_SPEED);
-    simon.pause();
     
-    simon.resume(Pedestrian.WALKING_SPEED);
-    assertFalse(simon.hasReachedDestination());
-    assertEquals(Pedestrian.WALKING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    
-    simon.stop();
-    simon.resume(Pedestrian.WALKING_SPEED);
-    assertTrue(simon.hasReachedDestination());
-  }
-  
   @Test public void aPedestrianCanAccuratelyCalculateTheirDistanceToAGivenPointAsTheBirdFlies() {
     assertEquals(50, simon.distanceToPoint(50, 0), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
-  
-  @Test public void tellingAPedestrianToPauseSetsTheirSpeedToZeroButMakesThemBelieveTheyStillHaveSomewhereToGo() {
-    simon.headToward(100, 100, Pedestrian.WALKING_SPEED);
-    assertEquals(Pedestrian.WALKING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     
-    simon.pause();
-    assertEquals(Pedestrian.STOPPED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertFalse(simon.hasReachedDestination());
-  }
-  
   @Test public void tellingAPedestrianToChangeSpeedWorks() {
     simon.headToward(100, 100, Pedestrian.WALKING_SPEED);
-    assertEquals(Pedestrian.WALKING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.WALKING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     
     simon.changeSpeedTo(Pedestrian.RUNNING_SPEED);
-    assertEquals(Pedestrian.RUNNING_SPEED, simon.getTargetSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Pedestrian.RUNNING_SPEED, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test public void tellingAPedestrianToStopWillSetTheirSpeedToZeroAndMakesThemBelieveThatTheyHaveArrivedAtTheirDestination() {

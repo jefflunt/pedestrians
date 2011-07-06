@@ -10,21 +10,28 @@ import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
-import com.jefflunt.pedestrians.pathfinding.ExtendedTileBasedMap;
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 
-/** The Pedestrian Simulation that handles logic, rendering, etc. */
+/** The Pedestrian Simulation that handles the initial simulation state, logic, and rendering. */
 public class PedestrianSim extends BasicGame {
   
   private Pedestrian[] peds;
   private PedestrianPathFinder pathFinder;
   private static PedestrianTileBasedMap tileMap;
   
+  /** Creates a new simulation.
+   * 
+   * @param title the title given to the application window.
+   */
   public PedestrianSim(String title) {
     super(title);
   }
   
-  public static ExtendedTileBasedMap getGlobalMap() {
+  /** Gets the tile map used by this instance of the simulation.
+   * 
+   * @return a tile map that is global to this simulation.
+   */
+  public static PedestrianTileBasedMap getGlobalMap() {
     return tileMap;
   }
   
@@ -36,7 +43,7 @@ public class PedestrianSim extends BasicGame {
     
     tileMap.randomizeObstacles();
     
-    peds = new Pedestrian[10];
+    peds = new Pedestrian[50];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
       peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
@@ -48,15 +55,7 @@ public class PedestrianSim extends BasicGame {
   @Override
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
-    if (input.isKeyDown(Input.KEY_P)) {
-      for (Pedestrian ped : peds) {
-        ped.pause();
-      }
-    } else if (input.isKeyDown(Input.KEY_SPACE)) {
-      for (Pedestrian ped : peds) {
-        ped.resume(Pedestrian.WALKING_SPEED);
-      }
-    } else if (input.isKeyDown(Input.KEY_O)) {
+    if (input.isKeyDown(Input.KEY_O)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       tileMap.permanentlyBlock(blockX, blockY);
@@ -105,7 +104,8 @@ public class PedestrianSim extends BasicGame {
     for (Pedestrian ped : peds) {
       ped.draw(ped.getCenterX(), ped.getCenterY());
     }
-      
+    
+    g.setColor(Color.white);
     g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
   }
 

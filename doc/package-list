@@ -1,1 +1,7 @@
+
+com.jefflunt.pedestrians
+com.jefflunt.pedestrians.pathfinding
+com.jefflunt.pedestrians.pathfinding.test
+com.jefflunt.pedestrians.physics
+com.jefflunt.pedestrians.physics.test
 com.jefflunt.pedestrians.test

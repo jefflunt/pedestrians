@@ -11,6 +11,7 @@ import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
+import com.jefflunt.pedestrians.physics.Vector;
 
 /** A class describing a Pedestrian that moves around the world. */
 public class Pedestrian extends Circle implements Renderable, Mover {
@@ -22,25 +23,18 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   private static final long serialVersionUID = 1202551036619728216L;
   /** The maximum distance from a target location at which a Pedestrian is considered to have arrived. */
-  public static final float STOP_DISTNACE = 3;
-  /** The default collision radius of the collision circles around Pedestrians. */
-  public static final float DEFAULT_COLLISION_RADIUS = 3;
-  
+  public static final float STOP_DISTNACE = ConfigValues.PEDESTRIAN_RADIUS*2;
   /** Speed for when you're stopped. */
   public static final float STOPPED = 0;
   /** Speed for when you're walking. */
-  public static final float WALKING_SPEED = 45;
+  public static final float WALKING_SPEED = 30;
   /** Speed for when you're running. */
   public static final float RUNNING_SPEED = 120;
   
   /** The GameContainer of which this Pedestrian is a part. */
   private GameContainer container;
-  /** The direction of travel, in radians. */
-  private float direction;
-  /** The target speed (not necessarily the current speed) at which the Pedestrian is traveling. */
-  private float targetSpeed;
-  /** The speed of travel, in units/second. */
-  private float speed;
+  /** The Vector representing this Pedestrian's current movement. */
+  private Vector movementVector;
   
   /** The x-coordinate of the current target point. */
   private float targetX;
@@ -57,15 +51,13 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
-    super(x, y, Pedestrian.DEFAULT_COLLISION_RADIUS);
+    super(x, y, ConfigValues.PEDESTRIAN_RADIUS);
     
-    direction = 0;
+    movementVector = new Vector(0, STOPPED);
     targetX = x;
     targetY = y;
     targetPathIndex = 0;
     targetPath = null;
-    targetSpeed = STOPPED;
-    speed = STOPPED;
     uniqueID = claimNextUniqueID();
     this.container = container;
   }
@@ -118,87 +110,63 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return targetPath.getLength();
   }
   
-  /** Causes the Pedestrian to move an appropriate amount, based on how much time has passed.
+  /** Causes the Pedestrian to move an appropriate amount, toward their target location, based on how much time has passed.
    * 
    * @param timeSlice The amount of time that has elapsed, in milliseconds.
    */
   public void move(long timeSlice) {
-    float deltaX = (float) (speed*Math.cos(direction)) * (timeSlice/1000.0f);
-    float deltaY = (float) (speed*Math.sin(direction)) * (timeSlice/1000.0f);
-    
     if (hasReachedDestination()) {
       if (isOnAPathSomewhere()) {
         targetPathIndex++;
-        if (targetPathIndex >= targetPath.getLength())
+        if (targetPathIndex >= targetPath.getLength()) {
           stop();
-        else
+        } else {
           headToward(targetPath.getX(targetPathIndex), targetPath.getY(targetPathIndex), getSpeed());
+        }
       }
     } else {
-      float proposedX = getCenterX() + deltaX;
-      float proposedY = getCenterY() + deltaY;
-      if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
-        setCenterX(getCenterX() + deltaX);
-        setCenterY(getCenterY() + deltaY);
-        TILE_MAP.getTileStateAt((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)).registerPedestrian(this);
-      } else { // i.e. if we're blocked, try to steer around it
-        steerTowardNearbyOpenTile();
+      // Basic direction establishment
+      float baseDeltaX = (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f);
+      float baseDeltaY = (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f);
+      
+      // Tile vectors (which include both the obstacle, and Pedestrian push vectors
+      Vector baseVector = Vector.getVectorFromComponents(baseDeltaX, baseDeltaY);
+      Point blockCoordinates = getCoordinatesOfCurrentBlock();
+      
+      for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+          Vector tileVector = TILE_MAP.pushVectorFromTile(this, blockCoordinates.x+x, blockCoordinates.y+y);
+          tileVector.scaleMagnitudeByPercentage((timeSlice/1000.0f));
+          baseVector.add(tileVector);
+        }
       }
-    }
-  }
-  
-  /** Tells this Pedestrian to find, and steer toward, a nearby open tile. */
-  private void steerTowardNearbyOpenTile() {
-    if (isTileOpenToTheLeft() && isTileOpenToTheRight()) {
-      int coinFlip = (int)(Math.random()*2);
-      if (coinFlip == 0) {
-        dodgeLeft();
+      
+      // Tile steering
+      float directionDelta = baseVector.getDirection() - movementVector.getDirection();
+      float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
+      movementVector.setDirection(movementVector.getDirection()+(directionDelta*percentageTurn));
+      
+      // Steering toward target
+      float targetDirectionDelta = getDirectionToTarget() - getDirection();
+      if (targetDirectionDelta < 0) {
+        targetDirectionDelta += 2*(Math.PI);
+      }
+      
+      if (targetDirectionDelta < Math.PI) {
+        movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.05f));
       } else {
-        dodgeRight();
+        movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.05f));
       }
-    } else if (isTileOpenToTheLeft()) {
-      dodgeLeft();
-    } else if (isTileOpenToTheRight()) {
-      dodgeRight();
+      
+      // Final adjustment of movement vector
+      float proposedX = getCenterX() + baseVector.getXComponent();
+      float proposedY = getCenterY() + baseVector.getYComponent();
+      if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
+        setCenterX(getCenterX() + baseVector.getXComponent());
+        setCenterY(getCenterY() + baseVector.getYComponent());
+        TILE_MAP.getTileStateAt((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)).registerPedestrian(this);
+      }
     }
-  }
-  
-  /** Tells this Pedestrian to dodge to the tile that is left of their current direction of travel. */
-  private void dodgeLeft() {
-    Point dodgeTargetPoint = getCoordinatesOfTileToTheLeft();
-    
-    headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
-  }
-  
-  /** Tells this Pedestrian to dodge to the tile that is right of their current direction of travel. */
-  private void dodgeRight() {
-    Point dodgeTargetPoint = getCoordinatesOfTileToTheRight();
-    
-    headToward((dodgeTargetPoint.x*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), (dodgeTargetPoint.y*ConfigValues.TILE_SIZE)+(ConfigValues.TILE_SIZE/2), getSpeed());
-  }
-  
-  /** Gets whether or not the tile, to the left of the direction of travel, is blocked or not.
-   * 
-   * @return true if the tile to the left is open, false otherwise.
-   */
-  private boolean isTileOpenToTheLeft() {
-    Point blockToTheLeft = getCoordinatesOfTileToTheLeft();
-    Point currentBlock = getCoordinatesOfCurrentBlock();
-    
-    return ((!TILE_MAP.blocked(null, blockToTheLeft.x, blockToTheLeft.y)) &&
-            (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheLeft.x, blockToTheLeft.y)));
-  }
-  
-  /** Gets whether or not the tile, to the right of the direction of travel, is blocked or not.
-   * 
-   * @return true if the tile to the right is open, false otherwise.
-   */
-  private boolean isTileOpenToTheRight() {
-    Point blockToTheRight = getCoordinatesOfTileToTheRight();
-    Point currentBlock = getCoordinatesOfCurrentBlock();
-    
-    return ((!TILE_MAP.blocked(null, blockToTheRight.x, blockToTheRight.y)) &&
-            (!TILE_MAP.diagonallyBlocked(null, currentBlock.x, currentBlock.y, blockToTheRight.x, blockToTheRight.y)));
   }
   
   /** Gets the (x, y) coordinate of the block that this Pedestrian currently occupies.
@@ -208,99 +176,6 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   public Point getCoordinatesOfCurrentBlock() {
     return (new Point((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)));
   }
-  
-  /** Gets the (x, y) coordinate of the block to the left of this Pedestrian's direction of travel.
-   * 
-   * @return a Point, containing the (x, y) coordinates of the tile to the left of this Pedestrian's direction of travel.
-   */
-  private Point getCoordinatesOfTileToTheLeft() {
-    int considerationBlockX = 0;
-    int considerationBlockY = 0;
-    
-    switch (getPrimaryDirection()) {
-      case ConfigValues.UP:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.DOWN:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-      case ConfigValues.LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-      case ConfigValues.RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.UP_LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
-        break;
-      case ConfigValues.UP_RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.DOWN_LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-      case ConfigValues.DOWN_RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
-        break;
-    }
-    
-    return (new Point(considerationBlockX, considerationBlockY));
-  }
-  
-  /** Gets the (x, y) coordinate of the block to the right of this Pedestrian's direction of travel.
-   * 
-   * @return a Point, containing the (x, y) coordinates of the tile to the right of this Pedestrian's direction of travel.
-   */
-  private Point getCoordinatesOfTileToTheRight() {
-    int considerationBlockX = 0;
-    int considerationBlockY = 0;
-    
-    switch (getPrimaryDirection()) {
-      case ConfigValues.UP:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.DOWN:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-      case ConfigValues.LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-      case ConfigValues.UP_LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) - 1;
-        break;
-      case ConfigValues.UP_RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) + 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
-        break;
-      case ConfigValues.DOWN_LEFT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE) - 1;
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE);
-        break;
-      case ConfigValues.DOWN_RIGHT:
-        considerationBlockX = (int)(getCenterX()/ConfigValues.TILE_SIZE);
-        considerationBlockY = (int)(getCenterY()/ConfigValues.TILE_SIZE) + 1;
-        break;
-    }
-    
-    return (new Point(considerationBlockX, considerationBlockY));
-  }
-  
   
   /** The distance, from the Pedestrian's current location, along the Path they are following, to the end
    * of the Path. It should be noted that this is an approximation. Due to various Pedestrian behaviors
@@ -343,7 +218,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public void setNewTargetPoint(float x, float y, float speed) {
     setTargetLocation(x, y);
-    this.targetSpeed = speed;
+    movementVector.setMagnitude(speed);
   }
   
   /** Tells the Pedestrian to head from their current location, along the specified Path.
@@ -430,7 +305,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   /** Whether or not the Pedestrian has reached the (x, y) location they are currently heading for.
    * 
    * @return true if they've reached that destination, false otherwise. If you ask a Pedestrian to follow
-   * a Path, this method is used interally to know when the Pedestrian arrives at each of the points
+   * a Path, this method is used internally to know when the Pedestrian arrives at each of the points
    * along that Path, and serves as a way to know when the Pedestrian should change direction and head
    * for the next point on that Path.
    */
@@ -438,33 +313,12 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return (distanceToPoint(targetX, targetY) <= Pedestrian.STOP_DISTNACE);
   }
   
-  /** Tells a Pedestrian to stop moving, but remember where they were headed.
-   * @see resume
-   * @see stop
-   */
-  public void pause() {
-    speed = STOPPED;
-    targetSpeed = STOPPED;
-  }
-  
-  /** Tells a Pedestrian to continue toward their destination, after pausing. If the Pedestrian
-   * forgot where they were headed (i.e. stopped), this method won't do anything.
-   * @see pause
-   * @see resume 
-   * 
-   * @param speed the speed at which you desire the Pedestrian to resume their course.
-   */
-  public void resume(float speed) {
-    this.speed = speed;
-    this.targetSpeed = speed;
-  }
-  
   /** Causes the Pedestrian to stop, and forget where they were headed.
    * @see pause
    * @see resume
    */
   public void stop() {
-    speed = STOPPED;
+    movementVector = new Vector(0, 0);
     targetX = getCenterX();
     targetY = getCenterY();
     targetPath = null;
@@ -478,7 +332,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public void changeSpeedTo(float speed) {
     if (!hasReachedDestination())
-      this.targetSpeed = speed;
+      movementVector.setMagnitude(speed);
   }
   
   /** Sends this Pedestrian from their current location, directly toward the specified point in space.
@@ -488,8 +342,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @param speed the speed at which to travel there.
    */
   public void headToward(float x, float y, float speed) {
-    setTargetSpeed(speed);
     setTargetLocation(x, y);
+    movementVector.setMagnitude(speed);
   }
   
   /** Sets the Pedestrian in motion either up, down, left, or right. The Pedestrian's target
@@ -560,7 +414,15 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @return the direction of travel, in radians.
    */
   public float getDirection() {
-    return direction;
+    return movementVector.getDirection();
+  }
+  
+  /** Gets the direction from this Pedestrian's current location, toward their target location.
+   * 
+   * @return the direction, measured in radians, from the Pedestrian to their target location.
+   */
+  public float getDirectionToTarget() {
+    return Vector.getDirectionFromDeltas(getTargetX()-getCenterX(), getTargetY()-getCenterY());
   }
   
   /** Returns the primary direction that this pedestrian is heading in. It is not necessary that a Pedestrian be heading
@@ -571,20 +433,21 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public int getPrimaryDirection() {
     int primaryDirection = 666;
+    float dir = movementVector.getDirection();
     
-    if ((direction > 0.392699082) && (direction <= 1.17809725))
+    if ((dir > 0.392699082) && (dir <= 1.17809725))
       primaryDirection = ConfigValues.DOWN_RIGHT;
-    else if ((direction > 1.17809725) && (direction <= 1.96349541))
+    else if ((dir > 1.17809725) && (dir <= 1.96349541))
       primaryDirection = ConfigValues.DOWN;
-    else if ((direction > 1.96349541) && (direction <= 2.74889358))
+    else if ((dir > 1.96349541) && (dir <= 2.74889358))
       primaryDirection = ConfigValues.DOWN_LEFT;
-    else if ((direction > 2.74889358) && (direction <= 3.53429174))
+    else if ((dir > 2.74889358) && (dir <= 3.53429174))
       primaryDirection = ConfigValues.LEFT;
-    else if ((direction > 3.53429174) && (direction <= 4.3196899))
+    else if ((dir > 3.53429174) && (dir <= 4.3196899))
       primaryDirection = ConfigValues.UP_LEFT;
-    else if ((direction > 4.3196899)  && (direction <= 5.10508807))
+    else if ((dir > 4.3196899)  && (dir <= 5.10508807))
       primaryDirection = ConfigValues.UP;
-    else if ((direction > 5.10508807) && (direction <= 5.89048623))
+    else if ((dir > 5.10508807) && (dir <= 5.89048623))
       primaryDirection = ConfigValues.UP_RIGHT;
     else
       primaryDirection = ConfigValues.RIGHT;
@@ -597,15 +460,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @return this Pedestrian's current speed.
    */
   public float getSpeed() {
-    return speed;
-  }
-  
-  /** Gets the target speed (the speed that the Pedestrian travels at, when there are no obstacles in the way).
-   * 
-   * @return the target speed for this Pedestrian.
-   */
-  public float getTargetSpeed() {
-    return targetSpeed;
+    return movementVector.getMagnitude();
   }
   
   /** Gets the x-coordinate of this Pedestrian's current target location.
@@ -636,24 +491,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     float deltaX = targetX-getCenterX();
     float deltaY = targetY-getCenterY();
     
-    direction = (float) Math.atan(deltaY/deltaX);
-    if (deltaX < 0)                     // Second and third quadrants
-      direction += Math.PI;
-    else if (deltaX > 0 && deltaY < 0)  // Fourth quadrant
-      direction += Math.PI*2.0;
-    
-    if (direction < 0)
-      direction += Math.PI*2;
-    if (direction > Math.PI*2)
-      direction -= Math.PI*2;
-  }
-  
-  /** Changes the Pedestrian's speed to the specified speed.
-   * 
-   * @param speed the new specified speed for this Pedestrian.
-   */
-  private void setTargetSpeed(float speed) {
-    this.targetSpeed = speed;
+    movementVector = Vector.getVectorFromComponents(deltaX, deltaY);
   }
 
   @Override
