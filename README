@@ -1,5 +1,9 @@
 Pedestrians is a simulator for pedestrian movement. It's fun, it's light, it's a tech demo at this point.
 
-As of June 2011, the project has been in development for a week. It doesn't do much right now. You can launch "StartPedestrians.class", and you'll see a single pedestrian. You can click on any point on the screen, and the pedestrian will move there. Hold down your mouse and draw a path around the screen; the pedestrian will follow that path.
+As of July 2011, the project has been in development for barely more than a month. Here's a basic rundown of what the project currently does:
+1. Launch it with "StartPedestrians.class"
+2. A number of pedestrians are randomly generated and placed around the world.
+3. The world is full of randomly placed obstacles (red blocks)
+4. Pedestrians avoid running into/through these blocks, as well as other pedestrians
 
-The project is being built for Mac OS, Linux, and Windows.
+The project is being built with all three major desktop OS's in mind: Mac OS, Linux, and Windows.

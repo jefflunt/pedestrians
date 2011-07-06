@@ -18,7 +18,7 @@ public class Vector {
    * @param magnitude the magnitude
    */
   public Vector(float direction, float magnitude) {
-    this.direction = direction;
+    this.direction = getNormalizedDirection(direction);
     this.magnitude = magnitude;
     xComponent = ((float)(Math.cos(direction)*magnitude));
     yComponent = ((float)(Math.sin(direction)*magnitude));
@@ -37,7 +37,7 @@ public class Vector {
    * @param direction the new direction for this Vector, measured in radians.
    */
   public void setDirection(float direction) {
-    this.direction = direction;
+    this.direction = getNormalizedDirection(direction);
     xComponent = ((float)(Math.cos(direction)*magnitude));
     yComponent = ((float)(Math.sin(direction)*magnitude));
   }
@@ -98,18 +98,26 @@ public class Vector {
       newDirection = 0;
     }
     
-    if (xDelta < 0)                         // Second and third quadrants
+    if (xDelta < 0)                     // Second and third quadrants
       newDirection += Math.PI;
     else if (xDelta > 0 && yDelta < 0)  // Fourth quadrant
       newDirection += Math.PI*2.0;
     
-    // Normalize direction, so it's between 0 and 2*PI
-    if (newDirection < 0)
-      newDirection += Math.PI*2;
-    if (newDirection > Math.PI*2)
-      newDirection -= Math.PI*2;
+    newDirection = getNormalizedDirection(newDirection);
     
     return newDirection;
+  }
+  
+  /** Takes this Vector's direction, and changes it to an equivalent value between 0 and 2(PI) */
+  public static float getNormalizedDirection(float direction) {
+    while ((direction < 0) || (direction > 2*(Math.PI))) {
+      if (direction < 0)
+        direction += Math.PI*2;
+      if (direction > Math.PI*2)
+        direction -= Math.PI*2;
+    }
+    
+    return direction;
   }
   
   /** Creates a new vector from the specified x and y components.
