@@ -27,7 +27,7 @@ public class ConfigValues {
   /** The size (both width and height) of path finding tiles. */
   public static final int TILE_SIZE = 10;
   /** The maximum distance from which blocked tiles will push on a Pedestrian. */
-  public static final float TILE_PUSH_RADIUS = TILE_SIZE*4;
+  public static final float TILE_PUSH_RADIUS = 10;
   /** The maximum length of a path found by the path finder. */
   public static final int MAX_SEARCH_DEPTH = 1000;
   

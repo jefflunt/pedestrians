@@ -23,7 +23,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   private static final long serialVersionUID = 1202551036619728216L;
   /** The maximum distance from a target location at which a Pedestrian is considered to have arrived. */
-  public static final float STOP_DISTNACE = ConfigValues.PEDESTRIAN_RADIUS*2;
+  public static final float STOP_DISTNACE = ConfigValues.TILE_SIZE;
   /** Speed for when you're stopped. */
   public static final float STOPPED = 0;
   /** Speed for when you're walking. */
@@ -143,19 +143,24 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       
       // Tile steering
       float directionDelta = baseVector.getDirection() - movementVector.getDirection();
-      float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
-      movementVector.setDirection(movementVector.getDirection()+(directionDelta*percentageTurn));
+      //float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
+      movementVector.setDirection(movementVector.getDirection()+(directionDelta));
       
-      // Steering toward target
+      // Target steering
       float targetDirectionDelta = getDirectionToTarget() - getDirection();
       if (targetDirectionDelta < 0) {
         targetDirectionDelta += 2*(Math.PI);
       }
+      if (targetDirectionDelta > 2*Math.PI) {
+        targetDirectionDelta -= 2*Math.PI;
+      }
       
-      if (targetDirectionDelta < Math.PI) {
-        movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.05f));
-      } else {
-        movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.05f));
+      if (targetDirectionDelta > Math.PI/4) {
+        if (targetDirectionDelta < Math.PI) {
+          movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.06f));
+        } else {
+          movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.06f));
+        }
       }
       
       // Final adjustment of movement vector
@@ -488,10 +493,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetX = x;
     targetY = y;
     
-    float deltaX = targetX-getCenterX();
-    float deltaY = targetY-getCenterY();
-    
-    movementVector = Vector.getVectorFromComponents(deltaX, deltaY);
+    movementVector = Vector.getVectorFromComponents(targetX-getCenterX(), targetY-getCenterY());
   }
 
   @Override

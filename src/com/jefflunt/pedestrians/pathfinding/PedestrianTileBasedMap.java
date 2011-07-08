@@ -86,6 +86,7 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
    * @return the magnitude of the push vector
    */
   public float getTilePushMagnitude(float distance) {
+    //return (float) ((-distance*1.5)+22.5);
     return (float) ((Math.pow(0.4, distance)*20000));
   }
   
@@ -95,7 +96,7 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
    * @return the magnitude of the push vector
    */
   public float getPedestrianPushMagnitude(float distance) {
-    return (float) ((-distance*.333)+3);
+    return (float) ((-distance*.666)+6);
     //return (float) ((Math.pow(0.84, distance))*20);
   }
   
@@ -183,7 +184,7 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
     
     for (int x = 4; x < blockingMap.length-4; x++) {
       for (int y = 4; y < blockingMap[0].length-4; y++) {
-        int blockSize = ((int) (Math.random() * 200));
+        int blockSize = ((int) (Math.random() * 20));
         switch (blockSize) {
           case 1:
             blockingMap[x][y].setIsBlocked(true);
