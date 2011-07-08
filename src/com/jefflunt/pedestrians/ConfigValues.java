@@ -38,5 +38,7 @@ public class ConfigValues {
   
   /** A flag that specifies whether or not to render pedestrian path finding paths. */
   public static boolean renderPaths = false;
+  /** A flag that specifies whether or not to render system info, such as current JVM memory usage, frames-per-second rendering, etc. */
+  public static boolean renderSystemInfo = false;
   
 }

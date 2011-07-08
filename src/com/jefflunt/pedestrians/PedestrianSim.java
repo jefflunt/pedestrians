@@ -37,6 +37,7 @@ public class PedestrianSim extends BasicGame {
   
   @Override
   public void init(GameContainer container) throws SlickException {
+    container.setShowFPS(ConfigValues.renderSystemInfo);
     tileMap = new PedestrianTileBasedMap(container);
     Pedestrian.setGlobalTileMap(tileMap);
     pathFinder = new PedestrianPathFinder(tileMap, ConfigValues.MAX_SEARCH_DEPTH, true);
@@ -56,17 +57,31 @@ public class PedestrianSim extends BasicGame {
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
     
+    if (input.isKeyDown(Input.KEY_F1)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        gc.setShowFPS(false);
+        ConfigValues.renderSystemInfo = false;
+      } else {
+        gc.setShowFPS(true);
+        ConfigValues.renderSystemInfo = true;
+      } 
+    }
+    
     if (input.isKeyDown(Input.KEY_P)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         ConfigValues.renderPaths = false;
       } else {
         ConfigValues.renderPaths = true;
       }
-    } if (input.isKeyDown(Input.KEY_O)) {
+    } 
+    
+    if (input.isKeyDown(Input.KEY_O)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       tileMap.permanentlyBlock(blockX, blockY);
-    } else if (input.isKeyDown(Input.KEY_C)) {
+    }
+    
+    if (input.isKeyDown(Input.KEY_C)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       tileMap.permanentlyOpen(blockX, blockY);
@@ -112,8 +127,10 @@ public class PedestrianSim extends BasicGame {
       ped.draw(ped.getCenterX(), ped.getCenterY());
     }
     
-    g.setColor(Color.white);
-    g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
+    if (ConfigValues.renderSystemInfo) {
+      g.setColor(Color.white);
+      g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
+    }
   }
 
 }

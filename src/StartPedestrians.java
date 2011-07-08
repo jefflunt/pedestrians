@@ -12,7 +12,6 @@ public class StartPedestrians {
       AppGameContainer container = new AppGameContainer(pedSim);
       container.setDisplayMode(800, 600, false);
       
-      container.setShowFPS(true);
       container.setClearEachFrame(true);
       
       pedSim.init(container);
