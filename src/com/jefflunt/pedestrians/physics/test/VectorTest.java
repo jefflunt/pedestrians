@@ -134,4 +134,17 @@ public class VectorTest {
     assertEquals((float) 0, vectorFromComponents.getMagnitude(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
+  @Test
+  public void gettingTheDirectionWithDeltasReturnsTheCorrectDirection() {
+    assertEquals(0,             Vector.getDirectionFromDeltas(100, 0),  ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Math.PI/2,     Vector.getDirectionFromDeltas(0, 100),  ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(Math.PI,       Vector.getDirectionFromDeltas(-100, 0), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(3*(Math.PI/2), Vector.getDirectionFromDeltas(0, -100), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    
+    assertEquals(Math.PI/4,     Vector.getDirectionFromDeltas( 100,  100), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(3*(Math.PI/4), Vector.getDirectionFromDeltas(-100,  100), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(5*(Math.PI/4), Vector.getDirectionFromDeltas(-100, -100), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(7*(Math.PI/4), Vector.getDirectionFromDeltas( 100, -100), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+  }
+  
 }

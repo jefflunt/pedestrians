@@ -23,7 +23,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   private static final long serialVersionUID = 1202551036619728216L;
   /** The maximum distance from a target location at which a Pedestrian is considered to have arrived. */
-  public static final float STOP_DISTNACE = ConfigValues.PEDESTRIAN_RADIUS*2;
+  public static final float STOP_DISTNACE = ConfigValues.TILE_SIZE;
   /** Speed for when you're stopped. */
   public static final float STOPPED = 0;
   /** Speed for when you're walking. */
@@ -48,6 +48,10 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   /** This Pedestrian's unique ID. */
   private int uniqueID;
+  /** This Pedestrian's name (does not have to be unique. */
+  private String name;
+  /** The color that this Pedestrian will use to be rendered. */
+  private Color renderColor;
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
@@ -59,6 +63,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetPathIndex = 0;
     targetPath = null;
     uniqueID = claimNextUniqueID();
+    name = ConfigValues.randomNames[(int) (Math.random()*ConfigValues.randomNames.length)];
+    renderColor = new Color((int) (Math.random()*150)+100, (int) (Math.random()*150)+100, (int) (Math.random()*150)+100);
     this.container = container;
   }
   
@@ -143,19 +149,24 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       
       // Tile steering
       float directionDelta = baseVector.getDirection() - movementVector.getDirection();
-      float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
-      movementVector.setDirection(movementVector.getDirection()+(directionDelta*percentageTurn));
+      //float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
+      movementVector.setDirection(movementVector.getDirection()+(directionDelta));
       
-      // Steering toward target
+      // Target steering
       float targetDirectionDelta = getDirectionToTarget() - getDirection();
       if (targetDirectionDelta < 0) {
         targetDirectionDelta += 2*(Math.PI);
       }
+      if (targetDirectionDelta > 2*Math.PI) {
+        targetDirectionDelta -= 2*Math.PI;
+      }
       
-      if (targetDirectionDelta < Math.PI) {
-        movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.05f));
-      } else {
-        movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.05f));
+      if (targetDirectionDelta > Math.PI/4) {
+        if (targetDirectionDelta < Math.PI) {
+          movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.06f));
+        } else {
+          movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.06f));
+        }
       }
       
       // Final adjustment of movement vector
@@ -488,35 +499,39 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetX = x;
     targetY = y;
     
-    float deltaX = targetX-getCenterX();
-    float deltaY = targetY-getCenterY();
-    
-    movementVector = Vector.getVectorFromComponents(deltaX, deltaY);
+    movementVector = Vector.getVectorFromComponents(targetX-getCenterX(), targetY-getCenterY());
   }
 
   @Override
   public void draw(float x, float y) {
     Graphics g = container.getGraphics();
     
-//    if (isOnAPathSomewhere()) {
-//      g.setColor(Color.blue);
-//      g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
-//      
-//      for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
-//        if (i % 2 == 0)
-//          g.setColor(Color.cyan);
-//        else
-//          g.setColor(Color.orange);
-//        g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
-//      }
-//      
-//      g.setColor(Color.red);
-//      g.fillOval(getTargetX(), getTargetY(), 2, 2);
-//    }
+    if (ConfigValues.renderPaths) {
+      if (isOnAPathSomewhere()) {
+        g.setColor(Color.blue);
+        g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
+        
+        for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
+          if (i % 2 == 0)
+            g.setColor(Color.cyan);
+          else
+            g.setColor(Color.orange);
+          g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
+        }
+        
+        g.setColor(Color.red);
+        g.fillOval(getTargetX(), getTargetY(), 2, 2);
+      }
+    }
     
-    g.setColor(Color.white);
+    g.setColor(renderColor);
     g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
     g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
+    
+    if (ConfigValues.renderPedNames) {
+      g.setColor(Color.white);
+      g.drawString(name, getCenterX() + 8, getCenterY() - 10);
+    }
   }
 
 }
