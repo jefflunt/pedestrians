@@ -48,6 +48,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   /** This Pedestrian's unique ID. */
   private int uniqueID;
+  /** The color that this Pedestrian will use to be rendered. */
+  private Color renderColor;
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
@@ -59,6 +61,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetPathIndex = 0;
     targetPath = null;
     uniqueID = claimNextUniqueID();
+    renderColor = new Color((int) (Math.random()*200)+50, (int) (Math.random()*200)+50, (int) (Math.random()*200)+50);
     this.container = container;
   }
   
@@ -516,7 +519,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
 //      g.fillOval(getTargetX(), getTargetY(), 2, 2);
 //    }
     
-    g.setColor(Color.white);
+    g.setColor(renderColor);
     g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
     g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
   }
