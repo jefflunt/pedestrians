@@ -55,7 +55,14 @@ public class PedestrianSim extends BasicGame {
   @Override
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
-    if (input.isKeyDown(Input.KEY_O)) {
+    
+    if (input.isKeyDown(Input.KEY_P)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        ConfigValues.renderPaths = false;
+      } else {
+        ConfigValues.renderPaths = true;
+      }
+    } if (input.isKeyDown(Input.KEY_O)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       tileMap.permanentlyBlock(blockX, blockY);

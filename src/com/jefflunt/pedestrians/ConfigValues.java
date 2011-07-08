@@ -36,4 +36,7 @@ public class ConfigValues {
   /** The maximum distance from which Pedestrians will push against each other for the purpose of collision avoidance. */
   public static final float PEDESTRIAN_PUSH_RADIUS = 9;
   
+  /** A flag that specifies whether or not to render pedestrian path finding paths. */
+  public static boolean renderPaths = false;
+  
 }

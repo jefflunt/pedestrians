@@ -502,22 +502,24 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   @Override
   public void draw(float x, float y) {
     Graphics g = container.getGraphics();
-    
-//    if (isOnAPathSomewhere()) {
-//      g.setColor(Color.blue);
-//      g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
-//      
-//      for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
-//        if (i % 2 == 0)
-//          g.setColor(Color.cyan);
-//        else
-//          g.setColor(Color.orange);
-//        g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
-//      }
-//      
-//      g.setColor(Color.red);
-//      g.fillOval(getTargetX(), getTargetY(), 2, 2);
-//    }
+
+    if (ConfigValues.renderPaths) {
+      if (isOnAPathSomewhere()) {
+        g.setColor(Color.blue);
+        g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
+        
+        for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
+          if (i % 2 == 0)
+            g.setColor(Color.cyan);
+          else
+            g.setColor(Color.orange);
+          g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
+        }
+        
+        g.setColor(Color.red);
+        g.fillOval(getTargetX(), getTargetY(), 2, 2);
+      }
+    }
     
     g.setColor(renderColor);
     g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
