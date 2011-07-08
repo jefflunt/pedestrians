@@ -25,7 +25,7 @@ public class PedestrianTileBasedMapTest {
   @Test
   public void maginitudeProximityCalculationGetsTheProperValue() {
     assertEquals(32.7680, pedMap.getTilePushMagnitude(7), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(1.33500, pedMap.getPedestrianPushMagnitude(5), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(2.6700, pedMap.getPedestrianPushMagnitude(5), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test
