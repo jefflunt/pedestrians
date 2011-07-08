@@ -40,5 +40,15 @@ public class ConfigValues {
   public static boolean renderPaths = false;
   /** A flag that specifies whether or not to render system info, such as current JVM memory usage, frames-per-second rendering, etc. */
   public static boolean renderSystemInfo = false;
+  /** A flag that specifies whether or not to render Pedestrian names, next to the Pedestrians on teh obstacle field. */
+  public static boolean renderPedNames = false;
+  
+  /** Random names for Pedestrians. This is a basic list pulled from US data on popular baby names for the year 2010. */
+  public static final String[] randomNames = {
+    "Jacob",      "Isabella", "Ethan",  "Sophia",   "Michael", 
+    "Emma",       "Jayden",   "Olivia", "William",  "Ava", 
+    "Alexander",  "Emily",    "Noah",   "Abigail",  "Daniel", 
+    "Madison",    "Aiden",    "Chloe",  "Anthony",  "Mia"
+  };
   
 }

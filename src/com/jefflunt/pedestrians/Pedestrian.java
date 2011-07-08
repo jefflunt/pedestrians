@@ -48,6 +48,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   
   /** This Pedestrian's unique ID. */
   private int uniqueID;
+  /** This Pedestrian's name (does not have to be unique. */
+  private String name;
   /** The color that this Pedestrian will use to be rendered. */
   private Color renderColor;
   
@@ -61,7 +63,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     targetPathIndex = 0;
     targetPath = null;
     uniqueID = claimNextUniqueID();
-    renderColor = new Color((int) (Math.random()*200)+50, (int) (Math.random()*200)+50, (int) (Math.random()*200)+50);
+    name = ConfigValues.randomNames[(int) (Math.random()*ConfigValues.randomNames.length)];
+    renderColor = new Color((int) (Math.random()*150)+100, (int) (Math.random()*150)+100, (int) (Math.random()*150)+100);
     this.container = container;
   }
   
@@ -502,7 +505,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   @Override
   public void draw(float x, float y) {
     Graphics g = container.getGraphics();
-
+    
     if (ConfigValues.renderPaths) {
       if (isOnAPathSomewhere()) {
         g.setColor(Color.blue);
@@ -524,6 +527,11 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     g.setColor(renderColor);
     g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
     g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
+    
+    if (ConfigValues.renderPedNames) {
+      g.setColor(Color.white);
+      g.drawString(name, getCenterX() + 8, getCenterY() - 10);
+    }
   }
 
 }

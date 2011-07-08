@@ -67,6 +67,14 @@ public class PedestrianSim extends BasicGame {
       } 
     }
     
+    if (input.isKeyDown(Input.KEY_N)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        ConfigValues.renderPedNames = false;
+      } else {
+        ConfigValues.renderPedNames = true;
+      } 
+    }
+    
     if (input.isKeyDown(Input.KEY_P)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         ConfigValues.renderPaths = false;
