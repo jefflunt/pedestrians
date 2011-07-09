@@ -35,6 +35,8 @@ public class ConfigValues {
   public static final float PEDESTRIAN_RADIUS = 3;
   /** The maximum distance from which Pedestrians will push against each other for the purpose of collision avoidance. */
   public static final float PEDESTRIAN_PUSH_RADIUS = 9;
+  /** The number of radians/second a Pedestrian will turn, at most. */
+  public static final float PEDESTRIAN_TURN_RATE = (float) (6*Math.PI);
   
   /** A flag that specifies whether or not to render pedestrian path finding paths. */
   public static boolean renderPaths = false;

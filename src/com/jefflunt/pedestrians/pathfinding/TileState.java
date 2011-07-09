@@ -33,7 +33,8 @@ public class TileState {
    * @param ped the Pedestrian claiming to be here.
    */
   public void registerPedestrian(Pedestrian ped) {
-    pedestriansInThisTile.add(ped);
+    if (!pedestriansInThisTile.contains(ped))
+      pedestriansInThisTile.add(ped);
   }
   
   /** If the specified Pedestrian is registered in this tile, they will be removed. If they are not currently registered in this tile, there is no effect.

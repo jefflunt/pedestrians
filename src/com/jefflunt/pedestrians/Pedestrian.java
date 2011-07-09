@@ -46,12 +46,17 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   /** The index of the current point in the Path this this Pedestrian is following. */
   private int targetPathIndex;
   
+  /** A record of the tile map block this Pedestrian was in, the last time they moved. NOTE: It's possible, if a Pedestrian only moves a little, or not at all,
+   * or if ConfigValues.TILE_SIZE is defined to have blocks much larger than Pedestrians, that this value won't change with every call to 'move'.
+   */ 
+  private Point lastTileMapBlock;
   /** This Pedestrian's unique ID. */
   private int uniqueID;
   /** This Pedestrian's name (does not have to be unique. */
   private String name;
   /** The color that this Pedestrian will use to be rendered. */
   private Color renderColor;
+
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
@@ -65,6 +70,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     uniqueID = claimNextUniqueID();
     name = ConfigValues.randomNames[(int) (Math.random()*ConfigValues.randomNames.length)];
     renderColor = new Color((int) (Math.random()*150)+100, (int) (Math.random()*150)+100, (int) (Math.random()*150)+100);
+    lastTileMapBlock = getCoordinatesOfCurrentBlock();
     this.container = container;
   }
   
@@ -132,24 +138,23 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       }
     } else {
       // Basic direction establishment
-      float baseDeltaX = (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f);
-      float baseDeltaY = (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f);
+      float deltaX = (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f);
+      float deltaY = (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f);
       
       // Tile vectors (which include both the obstacle, and Pedestrian push vectors
-      Vector baseVector = Vector.getVectorFromComponents(baseDeltaX, baseDeltaY);
+      Vector deltaVector = Vector.getVectorFromComponents(deltaX, deltaY);
       Point blockCoordinates = getCoordinatesOfCurrentBlock();
       
       for (int x = -2; x <= 2; x++) {
         for (int y = -2; y <= 2; y++) {
           Vector tileVector = TILE_MAP.pushVectorFromTile(this, blockCoordinates.x+x, blockCoordinates.y+y);
           tileVector.scaleMagnitudeByPercentage((timeSlice/1000.0f));
-          baseVector.add(tileVector);
+          deltaVector.add(tileVector);
         }
       }
       
       // Tile steering
-      float directionDelta = baseVector.getDirection() - movementVector.getDirection();
-      //float percentageTurn = baseVector.getMagnitude() / movementVector.getMagnitude();
+      float directionDelta = deltaVector.getDirection() - movementVector.getDirection();
       movementVector.setDirection(movementVector.getDirection()+(directionDelta));
       
       // Target steering
@@ -163,19 +168,25 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       
       if (targetDirectionDelta > Math.PI/4) {
         if (targetDirectionDelta < Math.PI) {
-          movementVector.setDirection(movementVector.getDirection()+(targetDirectionDelta*0.06f));
+          movementVector.setDirection(movementVector.getDirection()+(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
         } else {
-          movementVector.setDirection(movementVector.getDirection()-(targetDirectionDelta*0.06f));
+          movementVector.setDirection(movementVector.getDirection()-(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
         }
       }
       
       // Final adjustment of movement vector
-      float proposedX = getCenterX() + baseVector.getXComponent();
-      float proposedY = getCenterY() + baseVector.getYComponent();
+      float proposedX = getCenterX() + deltaVector.getXComponent();
+      float proposedY = getCenterY() + deltaVector.getYComponent();
       if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
-        setCenterX(getCenterX() + baseVector.getXComponent());
-        setCenterY(getCenterY() + baseVector.getYComponent());
-        TILE_MAP.getTileStateAt((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)).registerPedestrian(this);
+        setCenterX(getCenterX() + deltaVector.getXComponent());
+        setCenterY(getCenterY() + deltaVector.getYComponent());
+        Point currentBlock = getCoordinatesOfCurrentBlock();
+        if ((currentBlock.x != lastTileMapBlock.x) || (currentBlock.y != lastTileMapBlock.y)) {
+          TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).unregisterPedestrian(this);
+          TILE_MAP.getTileStateAt(currentBlock.x, currentBlock.y).registerPedestrian(this);
+          
+          lastTileMapBlock = currentBlock;
+        }
       }
     }
   }
