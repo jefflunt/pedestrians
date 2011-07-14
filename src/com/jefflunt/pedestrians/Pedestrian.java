@@ -1,6 +1,8 @@
 package com.jefflunt.pedestrians;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
+import java.util.LinkedList;
 
 import org.newdawn.slick.Color;
 import org.newdawn.slick.GameContainer;
@@ -27,7 +29,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   /** Speed for when you're stopped. */
   public static final float STOPPED = 0;
   /** Speed for when you're walking. */
-  public static final float WALKING_SPEED = 30;
+  public static final float WALKING_SPEED = 20;
   /** Speed for when you're running. */
   public static final float RUNNING_SPEED = 120;
   
@@ -45,9 +47,11 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private Path targetPath;
   /** The index of the current point in the Path this this Pedestrian is following. */
   private int targetPathIndex;
+  /** This Pedestrian's array of turning sensors. */
+  private ObstacleSensor[] turningSensors;
   
   /** A record of the tile map block this Pedestrian was in, the last time they moved. NOTE: It's possible, if a Pedestrian only moves a little, or not at all,
-   * or if ConfigValues.TILE_SIZE is defined to have blocks much larger than Pedestrians, that this value won't change with every call to 'move'.
+   * or if ConfigValues.TILE_SIZE is defined to have blocks much larger than Pedestrians, that this value won't change very often.
    */ 
   private Point lastTileMapBlock;
   /** This Pedestrian's unique ID. */
@@ -71,6 +75,18 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     name = ConfigValues.randomNames[(int) (Math.random()*ConfigValues.randomNames.length)];
     renderColor = new Color((int) (Math.random()*150)+100, (int) (Math.random()*150)+100, (int) (Math.random()*150)+100);
     lastTileMapBlock = getCoordinatesOfCurrentBlock();
+    
+    turningSensors = new ObstacleSensor[] {
+        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_TURN_RATE,   0.1f),
+        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_TURN_RATE,   0.1f),
+        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*1.5f,  ConfigValues.PEDESTRIAN_TURN_RATE/2, 0.5f),
+        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*1.5f, -ConfigValues.PEDESTRIAN_TURN_RATE/2, 0.5f),
+        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*2.5f,  ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
+        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*2.5f, -ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
+        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
+        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
+    };
+    
     this.container = container;
   }
   
@@ -122,11 +138,33 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return targetPath.getLength();
   }
   
+  /** Gets a {@link Point2D} relative to this Pedestrian, rotated in the direction of travel, and assuming the center of the Pedestrian is the origin
+   * of the coordinate system. For example, if a Pedestrian's direction of travel is 'A', and their center point is (Px, Py), then this method
+   * will return (rx, rx) rotated by 'A', and then translated by (Px, Py).
+   * 
+   * @see http://en.wikipedia.org/wiki/Rotation_(mathematics)
+   * 
+   * @param rx the relative x-coordinate
+   * @param ry the relative y-coordinate
+   * @return a {@link Point2D.Float} representing the specified coordinates, relative to the Pedestrians center, and rotation (direction).
+   */
+  public Point2D.Float getRelativePointFromCenter(float rx, float ry) {
+    float resultX = (float) ((rx*(Math.cos(movementVector.getDirection()))) - (ry*(Math.sin(movementVector.getDirection()))));
+    float resultY = (float) ((rx*(Math.sin(movementVector.getDirection()))) + (ry*(Math.cos(movementVector.getDirection()))));
+    
+    resultX += getCenterX();
+    resultY += getCenterY();
+    
+    return (new Point2D.Float(resultX, resultY));
+  }
+  
   /** Causes the Pedestrian to move an appropriate amount, toward their target location, based on how much time has passed.
    * 
    * @param timeSlice The amount of time that has elapsed, in milliseconds.
    */
   public void move(long timeSlice) {
+    TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).unregisterPedestrian(this);
+    
     if (hasReachedDestination()) {
       if (isOnAPathSomewhere()) {
         targetPathIndex++;
@@ -137,57 +175,47 @@ public class Pedestrian extends Circle implements Renderable, Mover {
         }
       }
     } else {
-      // Basic direction establishment
-      float deltaX = (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f);
-      float deltaY = (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f);
+      boolean collisionSteeringUsed = false;
+      float speedMultiplier = 1.0f;
       
-      // Tile vectors (which include both the obstacle, and Pedestrian push vectors
-      Vector deltaVector = Vector.getVectorFromComponents(deltaX, deltaY);
-      Point blockCoordinates = getCoordinatesOfCurrentBlock();
-      
-      for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-          Vector tileVector = TILE_MAP.pushVectorFromTile(this, blockCoordinates.x+x, blockCoordinates.y+y);
-          tileVector.scaleMagnitudeByPercentage((timeSlice/1000.0f));
-          deltaVector.add(tileVector);
+      // Basic delta and direction establishment
+      Vector deltaVector = Vector.getVectorFromComponents(
+          (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f),
+          (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f));
+  
+      for (ObstacleSensor s : turningSensors) {
+        if ((s.relativeTileIsBlocked(TILE_MAP)) || (s.relativePointSensesPedestrian(TILE_MAP))) {
+          movementVector.setDirection(movementVector.getDirection()+(s.turnRate*(timeSlice/1000.0f)));
+          collisionSteeringUsed = true;
+          speedMultiplier = s.speedMultiplier;
+          break;
         }
       }
-      
-      // Tile steering
-      float directionDelta = deltaVector.getDirection() - movementVector.getDirection();
-      movementVector.setDirection(movementVector.getDirection()+(directionDelta));
       
       // Target steering
-      float targetDirectionDelta = getDirectionToTarget() - getDirection();
-      if (targetDirectionDelta < 0) {
-        targetDirectionDelta += 2*(Math.PI);
-      }
-      if (targetDirectionDelta > 2*Math.PI) {
-        targetDirectionDelta -= 2*Math.PI;
-      }
-      
-      if (targetDirectionDelta > Math.PI/4) {
-        if (targetDirectionDelta < Math.PI) {
-          movementVector.setDirection(movementVector.getDirection()+(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
-        } else {
-          movementVector.setDirection(movementVector.getDirection()-(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
+      if (!collisionSteeringUsed) {
+        float targetDirectionDelta = getDirectionToTarget() - getDirection();
+        if (targetDirectionDelta < 0) {
+          targetDirectionDelta += 2*(Math.PI);
+        }
+        if (targetDirectionDelta > 2*Math.PI) {
+          targetDirectionDelta -= 2*Math.PI;
+        }
+        
+        if (targetDirectionDelta > Math.PI/4) {
+          if (targetDirectionDelta < Math.PI) {
+            movementVector.setDirection(movementVector.getDirection()+(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
+          } else {
+            movementVector.setDirection(movementVector.getDirection()-(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
+          }
         }
       }
       
-      // Final adjustment of movement vector
-      float proposedX = getCenterX() + deltaVector.getXComponent();
-      float proposedY = getCenterY() + deltaVector.getYComponent();
-      if (!TILE_MAP.blocked(null, (int) (proposedX/ConfigValues.TILE_SIZE), (int) (proposedY/ConfigValues.TILE_SIZE))) {
-        setCenterX(getCenterX() + deltaVector.getXComponent());
-        setCenterY(getCenterY() + deltaVector.getYComponent());
-        Point currentBlock = getCoordinatesOfCurrentBlock();
-        if ((currentBlock.x != lastTileMapBlock.x) || (currentBlock.y != lastTileMapBlock.y)) {
-          TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).unregisterPedestrian(this);
-          TILE_MAP.getTileStateAt(currentBlock.x, currentBlock.y).registerPedestrian(this);
-          
-          lastTileMapBlock = currentBlock;
-        }
-      }
+      setCenterX(getCenterX() + (deltaVector.getXComponent()*speedMultiplier));
+      setCenterY(getCenterY() + (deltaVector.getYComponent()*speedMultiplier));
+      
+      lastTileMapBlock = getCoordinatesOfCurrentBlock();
+      TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).registerPedestrian(this);
     }
   }
   
@@ -196,7 +224,18 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @return a Point, containing the (x, y) coordinates of the tile in which this Pedestrian currently resides.
    */
   public Point getCoordinatesOfCurrentBlock() {
-    return (new Point((int) (getCenterX()/ConfigValues.TILE_SIZE), (int) (getCenterY()/ConfigValues.TILE_SIZE)));
+    return getCoordinatesForBlockAt(getCenterX(), getCenterY());
+  }
+  
+  /** Gets the tile map coordinates of the block at absolute coordinates (x, y). For example, if your ConfigValues.TILE_SIZE is 10,
+   * and you call getCoordinatesForBlockAt(15, 25), this method will return a new Point(1, 2).
+   * 
+   * @param x the x-coordinate being evaluated
+   * @param y the y-coordinate being evaluated
+   * @return a Point representing the tile map coordinates of the tile map block at (x, y).
+   */
+  public Point getCoordinatesForBlockAt(float x, float y) {
+    return (new Point((int) (x/ConfigValues.TILE_SIZE), (int) (y/ConfigValues.TILE_SIZE)));
   }
   
   /** The distance, from the Pedestrian's current location, along the Path they are following, to the end
@@ -509,8 +548,6 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private void setTargetLocation(float x, float y) {
     targetX = x;
     targetY = y;
-    
-    movementVector = Vector.getVectorFromComponents(targetX-getCenterX(), targetY-getCenterY());
   }
 
   @Override
@@ -535,6 +572,20 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       }
     }
     
+    if (ConfigValues.renderTurnSensors) { 
+      for (ObstacleSensor s : turningSensors) {
+        Point2D.Float sensorLocation = getRelativePointFromCenter(s.rx, s.ry);
+        if ((s.relativeTileIsBlocked(TILE_MAP)) || ((s.relativePointSensesPedestrian(TILE_MAP)))) { 
+          g.setColor(Color.white);
+          g.fillOval(sensorLocation.x, sensorLocation.y, 4, 4);
+        } else {
+          g.setColor(Color.green);
+          g.fillOval(sensorLocation.x, sensorLocation.y, 2, 2);
+        }
+        
+      }
+    }
+    
     g.setColor(renderColor);
     g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
     g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
@@ -543,6 +594,63 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       g.setColor(Color.white);
       g.drawString(name, getCenterX() + 8, getCenterY() - 10);
     }
+  }
+  
+  /** This class implements a simple obstacle sensor, used to tell the Pedestrian when an obstacle is encountered. */
+  private class ObstacleSensor {
+    
+    /** The Pedestrian associated with this ObstacleSensor. */
+    private Pedestrian pedestrian;
+    private float rx, ry;
+    private float speedMultiplier;
+    private float turnRate;
+    
+    /** Builds a new obstacle sensor.
+     * 
+     * @param ped the Pedestrian who owns this sensor.
+     * @param relativeX the x-coordinate of the position relative to the Pedestrian's center point and direction of travel
+     * @param relativeY the y-coordinate of the position relative to the Pedestrian's center point, and direction of travel
+     * @param turnRate the rate at which the Pedestrian should turn when this sensor indicates an obstacle
+     * @param speedMultiplier the speed multiplier applied to the Pedestrian's speed, when this sensor indicates an obstacle
+     */
+    public ObstacleSensor(Pedestrian ped, float relativeX, float relativeY, float turnRate, float speedMultiplier) {
+      this.pedestrian = ped;
+      this.rx = relativeX;
+      this.ry = relativeY;
+      this.turnRate = turnRate;
+      this.speedMultiplier = speedMultiplier;
+    }
+    
+    /** Gets whether or not the PedestrianTileBasedMap tile is blocked, or open.
+     * 
+     * @param tileMap the PedestrianTileBasedMap to use
+     * @return true, if the corresponding tile is blocked, false if it is open.
+     */
+    public boolean relativeTileIsBlocked(PedestrianTileBasedMap tileMap) {
+      Point2D.Float relativePoint = pedestrian.getRelativePointFromCenter(rx, ry);
+      
+      return (tileMap.blocked(null, (int) (relativePoint.x/ConfigValues.TILE_SIZE), (int) (relativePoint.y/ConfigValues.TILE_SIZE)));
+    }
+    
+    /** Gets whether or not this sensor senses a Pedestrian.
+     * 
+     * @param tileMap the PedestrianTileBasedMap to use, to get the TileState, and the resulting list of Pedestrians in that tile
+     * @return true if a Pedestrian is detected, false otherwise.
+     */
+    public boolean relativePointSensesPedestrian(PedestrianTileBasedMap tileMap) {
+      Point2D.Float relativePoint = pedestrian.getRelativePointFromCenter(rx, ry);
+      LinkedList<Pedestrian> peds = tileMap.getTileStateAt((int) (relativePoint.x/ConfigValues.TILE_SIZE), (int) (relativePoint.y/ConfigValues.TILE_SIZE)).getRegisteredPedestrians();
+      
+      boolean pedestrianOnThisPoint = false;
+      for (Pedestrian p : peds) {
+        if (Math.hypot(relativePoint.x - p.getCenterX(), relativePoint.y - p.getCenterY()) <= ConfigValues.PEDESTRIAN_RADIUS) {
+          pedestrianOnThisPoint = true;
+        }
+      }
+      
+      return pedestrianOnThisPoint;
+    }
+    
   }
 
 }

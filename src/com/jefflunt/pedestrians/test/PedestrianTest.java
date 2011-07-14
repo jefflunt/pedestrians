@@ -2,6 +2,8 @@ package com.jefflunt.pedestrians.test;
 
 import static org.junit.Assert.*;
 
+import java.awt.geom.Point2D;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.newdawn.slick.util.pathfinding.Path;
@@ -19,30 +21,10 @@ public class PedestrianTest {
   }
   
   @Test
-  public void aPedestrianKnowsTheBasicDirectionInWhichTheyAreHeading() {
-    simon.headDirection(ConfigValues.UP, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.UP, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.DOWN, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.DOWN, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.LEFT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.LEFT, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.RIGHT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.RIGHT, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.UP_LEFT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.UP_LEFT, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.UP_RIGHT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.UP_RIGHT, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.DOWN_LEFT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.DOWN_LEFT, simon.getPrimaryDirection());
-    
-    simon.headDirection(ConfigValues.DOWN_RIGHT, Pedestrian.WALKING_SPEED);
-    assertEquals(ConfigValues.DOWN_RIGHT, simon.getPrimaryDirection());
+  public void calcualtionOfRelativePointsFromCenterWorksAsExcpected() {
+    Point2D.Float relativePoint = simon.getRelativePointFromCenter(1, 1);
+    assertEquals( 1, relativePoint.x, ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals( 1, relativePoint.y, ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test
@@ -50,8 +32,8 @@ public class PedestrianTest {
     Path compressedPath = new Path();
     compressedPath.appendStep(1, 1);
     simon.headAlongPath(compressedPath, Pedestrian.WALKING_SPEED, true);
-    assertEquals(15, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(15, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(30, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(30, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test
@@ -126,33 +108,6 @@ public class PedestrianTest {
     simon.stop();
     assertEquals(0, simon.getSpeed(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
     assertTrue(simon.hasReachedDestination());
-  }
-  
-  @Test
-  public void tellingAPedestrianToHeadTowardAParticularDestinationCalculatesTheDirectionAndDestinationCorrectly() {
-    // 45-degree angle
-    simon.headToward(50, 50, Pedestrian.WALKING_SPEED);
-    assertEquals(50, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(50,  simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(0.7853, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    
-    // 315-degree angle (the opposite direction of 45 degrees)
-    simon.headToward(-50, -50, Pedestrian.WALKING_SPEED);
-    assertEquals(-50, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(-50, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(3.9269, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    
-    // RIGHT
-    simon.headToward(50, 0, Pedestrian.WALKING_SPEED);
-    assertEquals(50, simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(0,  simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(0, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-     
-    // UP
-    simon.headToward(0, -50, Pedestrian.WALKING_SPEED);
-    assertEquals(0,   simon.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(-50, simon.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
-    assertEquals(4.7124, simon.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
 }

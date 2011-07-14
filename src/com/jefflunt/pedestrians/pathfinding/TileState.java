@@ -12,10 +12,24 @@ public class TileState {
   /** The list of all Pedestrians who claim to be inside this tile. */
   private LinkedList<Pedestrian> pedestriansInThisTile;
   
+  /** The previous congestion level. */
+  private float lastCongestion;
+  /** The current congestion level. */
+  private float currCongestion;
+  /** The number of milliseconds between congestion calculations. */
+  private long millisBetweenCongestionCalculations;
+  /** The last time congestion was calculated on this Tile. */
+  private long nextCongestionCalculationTime;
+  
   /** Creates a new TileState. Default values are 'false' for the blocked state, and no Pedestrians registered. */
   public TileState() {
     blocked = false;
     pedestriansInThisTile = new LinkedList<Pedestrian>();
+    
+    lastCongestion = 0;
+    currCongestion = 0;
+    millisBetweenCongestionCalculations = 500;
+    nextCongestionCalculationTime = System.currentTimeMillis() + millisBetweenCongestionCalculations;
   }
   
   /** Gets whether or not this tile is blocked. */
@@ -43,6 +57,26 @@ public class TileState {
    */
   public void unregisterPedestrian(Pedestrian ped) {
     pedestriansInThisTile.remove(ped);
+  }
+  
+  /** Recalculates the congestion level. */
+  private void recalculateCongestion() {
+    float momentaryCongestion = (pedestriansInThisTile.size()*2)+1;
+    currCongestion = (lastCongestion + momentaryCongestion) / 2;
+    lastCongestion = currCongestion;
+  }
+  
+  /** The relative congestion of the given tile.
+   * 
+   * @return The more Pedestrians that are in this tile, the more congested it is.
+   */
+  public float getCongestion() {
+    if (System.currentTimeMillis() > nextCongestionCalculationTime) {
+      recalculateCongestion();
+      nextCongestionCalculationTime = System.currentTimeMillis() + millisBetweenCongestionCalculations;
+    }
+    
+    return currCongestion;
   }
   
   /** Gets a shallow copy of the Pedestrians registered with this tile. The LinkedList returned can be safely modified without breaking this tile's state.

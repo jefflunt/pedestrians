@@ -25,7 +25,7 @@ public class ConfigValues {
   public static final int DOWN_RIGHT = 7;
 
   /** The size (both width and height) of path finding tiles. */
-  public static final int TILE_SIZE = 10;
+  public static final int TILE_SIZE = 20;
   /** The maximum distance from which blocked tiles will push on a Pedestrian. */
   public static final float TILE_PUSH_RADIUS = 10;
   /** The maximum length of a path found by the path finder. */
@@ -33,10 +33,8 @@ public class ConfigValues {
   
   /** The radius of a Pedestrian. Used for rendering, etc. */
   public static final float PEDESTRIAN_RADIUS = 3;
-  /** The maximum distance from which Pedestrians will push against each other for the purpose of collision avoidance. */
-  public static final float PEDESTRIAN_PUSH_RADIUS = 9;
   /** The number of radians/second a Pedestrian will turn, at most. */
-  public static final float PEDESTRIAN_TURN_RATE = (float) (6*Math.PI);
+  public static final float PEDESTRIAN_TURN_RATE = (float) (3*Math.PI);
   
   /** A flag that specifies whether or not to render pedestrian path finding paths. */
   public static boolean renderPaths = false;
@@ -44,6 +42,10 @@ public class ConfigValues {
   public static boolean renderSystemInfo = false;
   /** A flag that specifies whether or not to render Pedestrian names, next to the Pedestrians on teh obstacle field. */
   public static boolean renderPedNames = false;
+  /** A flag that specifies whether or not to render Pedestrian turn sensors. */
+  public static boolean renderTurnSensors = false;
+  /** A flag that specifies whether or not to render tile congestion values. */
+  public static boolean renderCongestion = false;
   
   /** Random names for Pedestrians. This is a basic list pulled from US data on popular baby names for the year 2010. */
   public static final String[] randomNames = {

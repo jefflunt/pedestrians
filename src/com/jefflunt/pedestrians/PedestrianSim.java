@@ -44,7 +44,7 @@ public class PedestrianSim extends BasicGame {
     
     tileMap.randomizeObstacles();
     
-    peds = new Pedestrian[50];
+    peds = new Pedestrian[100];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
       peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
@@ -57,6 +57,8 @@ public class PedestrianSim extends BasicGame {
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
     
+    // TODO: Add a key in here to turn congestion rendering on/off
+    
     if (input.isKeyDown(Input.KEY_F1)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         gc.setShowFPS(false);
@@ -67,11 +69,27 @@ public class PedestrianSim extends BasicGame {
       } 
     }
     
+    if (input.isKeyDown(Input.KEY_C)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        ConfigValues.renderCongestion = false;
+      } else {
+        ConfigValues.renderCongestion = true;
+      } 
+    }
+    
     if (input.isKeyDown(Input.KEY_N)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         ConfigValues.renderPedNames = false;
       } else {
         ConfigValues.renderPedNames = true;
+      } 
+    }
+    
+    if (input.isKeyDown(Input.KEY_S)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        ConfigValues.renderTurnSensors = false;
+      } else {
+        ConfigValues.renderTurnSensors = true;
       } 
     }
     
@@ -86,14 +104,13 @@ public class PedestrianSim extends BasicGame {
     if (input.isKeyDown(Input.KEY_O)) {
       int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
-      tileMap.permanentlyBlock(blockX, blockY);
-    }
-    
-    if (input.isKeyDown(Input.KEY_C)) {
-      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
-      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
-      tileMap.permanentlyOpen(blockX, blockY);
-    }
+      
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        tileMap.permanentlyBlock(blockX, blockY);
+      } else {
+        tileMap.permanentlyOpen(blockX, blockY);
+      }
+    } 
     
     for (Pedestrian ped : peds) {
       if (!ped.isOnAPathSomewhere()) {
@@ -122,11 +139,20 @@ public class PedestrianSim extends BasicGame {
   
   @Override
   public void render(GameContainer container, Graphics g) throws SlickException {
-    g.setColor(Color.red);
     for (int x = 0; x < tileMap.getWidthInTiles(); x++) {
       for (int y = 0; y < tileMap.getHeightInTiles(); y++) {
         if (tileMap.blocked(pathFinder, x, y)) {
+          g.setColor(Color.red);
           g.fillRect(x*ConfigValues.TILE_SIZE, y*ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE);
+        } else {
+          if (ConfigValues.renderCongestion) {
+            float congestion = tileMap.getTileStateAt(x, y).getCongestion();
+            
+            if (congestion > 1) {
+              g.setColor(new Color(0, (int) (20*congestion), 0));
+              g.fillRect(x*ConfigValues.TILE_SIZE, y*ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE);
+            }
+          }
         }
       }
     }

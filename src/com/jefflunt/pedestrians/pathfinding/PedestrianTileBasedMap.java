@@ -1,14 +1,11 @@
 package com.jefflunt.pedestrians.pathfinding;
 
 import java.awt.Point;
-import java.util.LinkedList;
 
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.util.pathfinding.PathFindingContext;
 
 import com.jefflunt.pedestrians.ConfigValues;
-import com.jefflunt.pedestrians.Pedestrian;
-import com.jefflunt.pedestrians.physics.Vector;
 
 public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
   
@@ -40,64 +37,6 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
    */
   public Point getCenterOfTileAt(int x, int y) {
     return (new Point((x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2), (y*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2)));
-  }
-  
-  /** Gets the push vector, on the Pedestrian specified, from the tile at (x, y).
-   * 
-   * @param ped the Pedestrian to push around
-   * @param x the x-coordinate of the tile in question
-   * @param y the y-coordinate of the tile in question
-   * @return the resulting acceleration (push) vector exerted on 'ped'
-   */
-  public Vector pushVectorFromTile(Pedestrian ped, int x, int y) {
-    Vector tilePushVector = new Vector(0, 0);
-    
-    // Calculation of tile push vector
-    if (getTileStateAt(x, y).isBlocked()) {
-      Point centerOfTile = getCenterOfTileAt(x, y);
-      float distanceFromCenterOfTileToCenterOfPedestrian = (float) (Math.hypot(centerOfTile.x - ped.getCenterX(), centerOfTile.y - ped.getCenterY()));
-      if (distanceFromCenterOfTileToCenterOfPedestrian <= ConfigValues.TILE_PUSH_RADIUS) {
-        float direction = Vector.getDirectionFromDeltas(ped.getCenterX() - centerOfTile.x, ped.getCenterY() - centerOfTile.y);
-        float magnitude = getTilePushMagnitude(distanceFromCenterOfTileToCenterOfPedestrian);
-        tilePushVector.add(new Vector(direction, magnitude));
-      }
-    }
-    
-    // Calculation of Pedestrian push vector(s)
-    LinkedList<Pedestrian> pedsInThisTile = getTileStateAt(x, y).getRegisteredPedestrians();
-    for (Pedestrian pushingPed : pedsInThisTile) {
-      if (ped != pushingPed) { // a Pedestrian cannot push themselves
-        float distanceFromPushingPed = (float) (Math.hypot(ped.getCenterX()-pushingPed.getCenterX(), ped.getCenterY()-pushingPed.getCenterY()));
-        if (distanceFromPushingPed <= ConfigValues.PEDESTRIAN_PUSH_RADIUS) {
-          float direction = Vector.getDirectionFromDeltas(ped.getCenterX() - pushingPed.getCenterX(), ped.getCenterY() - pushingPed.getCenterY());
-          float magnitude = getPedestrianPushMagnitude(distanceFromPushingPed);
-          
-          tilePushVector.add(new Vector(direction, magnitude));
-        }
-      }
-    }
-    
-    return tilePushVector;
-  }
-  
-  /** Gets the magnitude of the tile push force, given the specified distance.
-   * 
-   * @param distance the distance for which to calculate the magnitude of the force.
-   * @return the magnitude of the push vector
-   */
-  public float getTilePushMagnitude(float distance) {
-    //return (float) ((-distance*1.5)+22.5);
-    return (float) ((Math.pow(0.4, distance)*20000));
-  }
-  
-  /** Gets the magnitude of the Pedestrian push force, given the specified distance.
-   * 
-   * @param distance
-   * @return the magnitude of the push vector
-   */
-  public float getPedestrianPushMagnitude(float distance) {
-    return (float) ((-distance*.666)+6);
-    //return (float) ((Math.pow(0.84, distance))*20);
   }
   
   /** Gets the TileState object of the tile at (x, y).
@@ -223,7 +162,8 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
 
   @Override
   public float getCost(PathFindingContext context, int x, int y) {
-    return 1;
+    //return 1;
+    return getTileStateAt(x, y).getCongestion();
   }
   
   @Override

@@ -1,5 +1,7 @@
 package com.jefflunt.pedestrians.physics;
 
+import java.awt.geom.Point2D;
+
 /** A class that implements basic vector (as in mathematical vector) addition. */
 public class Vector {
 
@@ -89,6 +91,16 @@ public class Vector {
    */
   public float getYComponent() {
     return yComponent;
+  }
+  
+  /** Returns the x and y components from the specified direction.
+   * 
+   * @param direction the direction, measured in radians.
+   * 
+   * @return a new Point, representing the (x, y) components.
+   */
+  public static Point2D.Float getDeltasFromDirection(float direction) {
+    return (new Point2D.Float((float) Math.cos(direction), (float) Math.sin(direction)));
   }
   
   public static float getDirectionFromDeltas(float xDelta, float yDelta) {

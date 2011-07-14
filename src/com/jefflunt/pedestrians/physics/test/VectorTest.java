@@ -2,6 +2,8 @@ package com.jefflunt.pedestrians.physics.test;
 
 import static org.junit.Assert.*;
 
+import java.awt.geom.Point2D;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,6 +17,17 @@ public class VectorTest {
   @Before
   public void setUp() {
     testVector = new Vector(0, 100);
+  }
+  
+  @Test
+  public void gettingDeltasFromADirectionWorksAsExpected() {
+    Point2D.Float deltas = Vector.getDeltasFromDirection(0);
+    assertEquals(1, deltas.getX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(0, deltas.getY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    
+    deltas = Vector.getDeltasFromDirection((float) (3*Math.PI)/2);
+    assertEquals( 0, deltas.getX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    assertEquals(-1, deltas.getY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
   }
   
   @Test
