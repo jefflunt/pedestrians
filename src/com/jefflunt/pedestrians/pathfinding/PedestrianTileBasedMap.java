@@ -2,6 +2,7 @@ package com.jefflunt.pedestrians.pathfinding;
 
 import java.awt.Point;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -109,6 +110,8 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
       
       fileIn.close();
       successfullyLoaded = true;
+    } catch (FileNotFoundException fnfEx) {
+      System.out.println("Creating new tilemap...");
     } catch (IOException ioEx) {
       ioEx.printStackTrace();
     }

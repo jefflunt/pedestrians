@@ -50,6 +50,10 @@ public class PedestrianSim extends BasicGame {
     Pedestrian.setGlobalTileMap(tileMap);
     pathFinder = new PedestrianPathFinder(tileMap, ConfigValues.MAX_SEARCH_DEPTH, true);
     
+    regenerateAllPedestrians(container);
+  }
+  
+  public void regenerateAllPedestrians(GameContainer container) {
     peds = new Pedestrian[500];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
@@ -70,6 +74,12 @@ public class PedestrianSim extends BasicGame {
       } else {
         gc.setShowFPS(true);
         ConfigValues.renderSystemInfo = true;
+      } 
+    }
+    
+    if (input.isKeyDown(Input.KEY_1)) {
+      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
+        regenerateAllPedestrians(gc);
       } 
     }
     
