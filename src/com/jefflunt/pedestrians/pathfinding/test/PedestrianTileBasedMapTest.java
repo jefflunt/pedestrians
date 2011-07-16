@@ -3,6 +3,7 @@ package com.jefflunt.pedestrians.pathfinding.test;
 import static org.junit.Assert.*;
 
 import java.awt.Point;
+import java.io.File;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +25,23 @@ public class PedestrianTileBasedMapTest {
     
     assertEquals(110, centerOfTile.x);
     assertEquals(130, centerOfTile.y);
+  }
+  
+  @Test
+  public void savingAMapToDiskWorks() {
+    File tileMapFile = new File("test.tilemap");
+    assertTrue(pedMap.save(tileMapFile.getName()));
+    
+    tileMapFile.delete();
+  }
+  
+  @Test
+  public void loadingAMapFromDiskWorks() {
+    File tileMapFile = new File("test.tilemap");
+    pedMap.save(tileMapFile.getName());
+    
+    pedMap = PedestrianTileBasedMap.loadTileMap("test.tilemap");
+    assertNotNull(pedMap);
   }
   
 }

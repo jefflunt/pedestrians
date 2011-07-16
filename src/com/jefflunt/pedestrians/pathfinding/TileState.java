@@ -2,6 +2,7 @@ package com.jefflunt.pedestrians.pathfinding;
 
 import java.util.LinkedList;
 
+import com.jefflunt.pedestrians.ConfigValues;
 import com.jefflunt.pedestrians.Pedestrian;
 
 /** A class that describes the current state of a tile in a PedestrianTileBasedMap. */
@@ -13,11 +14,7 @@ public class TileState {
   private LinkedList<Pedestrian> pedestriansInThisTile;
   
   /** The previous congestion level. */
-  private float lastCongestion;
-  /** The current congestion level. */
-  private float currCongestion;
-  /** The number of milliseconds between congestion calculations. */
-  private long millisBetweenCongestionCalculations;
+  private float congestion;
   /** The last time congestion was calculated on this Tile. */
   private long nextCongestionCalculationTime;
   
@@ -26,10 +23,8 @@ public class TileState {
     blocked = false;
     pedestriansInThisTile = new LinkedList<Pedestrian>();
     
-    lastCongestion = 0;
-    currCongestion = 0;
-    millisBetweenCongestionCalculations = 500;
-    nextCongestionCalculationTime = System.currentTimeMillis() + millisBetweenCongestionCalculations;
+    congestion = 0;
+    nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.MILLIS_BETWEEN_CONGESTION_CALCULATIONS;
   }
   
   /** Gets whether or not this tile is blocked. */
@@ -62,8 +57,8 @@ public class TileState {
   /** Recalculates the congestion level. */
   private void recalculateCongestion() {
     float momentaryCongestion = (pedestriansInThisTile.size()*2)+1;
-    currCongestion = (lastCongestion + momentaryCongestion) / 2;
-    lastCongestion = currCongestion;
+    
+    congestion = (congestion + momentaryCongestion) / 2;
   }
   
   /** The relative congestion of the given tile.
@@ -73,10 +68,10 @@ public class TileState {
   public float getCongestion() {
     if (System.currentTimeMillis() > nextCongestionCalculationTime) {
       recalculateCongestion();
-      nextCongestionCalculationTime = System.currentTimeMillis() + millisBetweenCongestionCalculations;
+      nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.MILLIS_BETWEEN_CONGESTION_CALCULATIONS;
     }
     
-    return currCongestion;
+    return congestion;
   }
   
   /** Gets a shallow copy of the Pedestrians registered with this tile. The LinkedList returned can be safely modified without breaking this tile's state.

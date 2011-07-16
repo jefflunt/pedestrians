@@ -1,6 +1,11 @@
 package com.jefflunt.pedestrians.pathfinding;
 
 import java.awt.Point;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.util.pathfinding.PathFindingContext;
@@ -11,6 +16,8 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
   
   /** The array of integers that store the current blocking state of this tile map. */
   private TileState blockingMap[][];
+  /** Whether or not this tilemap's blocking map has changed - i.e. if it needs to be saved. */
+  private boolean dirty;
 
   /** Constructs a new PedestrianTileBasedMap with no obstacles, and no Pedestrians.
    * 
@@ -20,12 +27,96 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
     this(container.getWidth()/ConfigValues.TILE_SIZE, container.getHeight()/ConfigValues.TILE_SIZE);
   }
   
+  /** Constructs a new PedestrianTileBasedMap with no obstacles, and no Pedestrians.
+   * 
+   * @param widthInTiles the width of the tile map
+   * @param heightInTiles the height of the tile map
+   */
   public PedestrianTileBasedMap(int widthInTiles, int heightInTiles) {
     blockingMap = new TileState[widthInTiles][heightInTiles];
     for (int x = 0; x < blockingMap.length; x++) {
       for (int y = 0; y < blockingMap[0].length; y++) {
         blockingMap[x][y] = new TileState();
       }
+    }
+    
+    dirty = true;
+  }
+  
+  /** Gets whether or not this tile map is dirty.
+   * 
+   * @return true if this tile map is dirty (i.e. has changed, and needs to be saved), false otherwise.
+   */
+  public boolean isDirty() {
+    return dirty;
+  }
+  
+  /** Sets the dirty flag on this tile map.
+   * 
+   * @param dirty the new state of the dirty flag of this tile map.
+   */
+  public void setDirty(boolean dirty) {
+    this.dirty = dirty;
+  }
+  
+  /** Saves this tile map to disk, and returns whether or not that operation was successful.
+   * 
+   * @return true if the save completed without error, false otherwise.
+   */
+  public boolean save(String filename) {
+    boolean savedSuccessfully = true;
+    
+    try {
+      ObjectOutputStream fileOut = new ObjectOutputStream(new FileOutputStream(filename, false));
+      
+      fileOut.writeInt(blockingMap.length);
+      fileOut.writeInt(blockingMap[0].length);
+      
+      for (int x = 0; x < blockingMap.length; x++) {
+        for (int y = 0; y < blockingMap[0].length; y++) {
+          fileOut.writeBoolean(blockingMap[x][y].isBlocked());
+        }
+      }
+      
+      fileOut.flush();
+      fileOut.close();
+    } catch (IOException ioEx) {
+      ioEx.printStackTrace();
+      savedSuccessfully = false;
+    }
+    
+    return savedSuccessfully;
+  }
+  
+  public static PedestrianTileBasedMap loadTileMap(String filename) {
+    boolean successfullyLoaded = false;
+    PedestrianTileBasedMap tileMap = null;
+    
+    try {
+      ObjectInputStream fileIn = new ObjectInputStream(new FileInputStream(filename));
+      
+      int width = fileIn.readInt();
+      int height = fileIn.readInt();
+      
+      tileMap = new PedestrianTileBasedMap(width, height);
+      
+      for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+          tileMap.blockingMap[x][y] = new TileState();
+          tileMap.blockingMap[x][y].setIsBlocked(fileIn.readBoolean());
+        }
+      }
+      
+      fileIn.close();
+      successfullyLoaded = true;
+    } catch (IOException ioEx) {
+      ioEx.printStackTrace();
+    }
+    
+    if (successfullyLoaded) {
+      return tileMap;
+    } else {
+      return null;
     }
   }
   
@@ -148,6 +239,8 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
         }
       }
     }
+    
+    setDirty(true);
   }
 
   @Override

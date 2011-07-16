@@ -25,7 +25,7 @@ public class PedestrianSimTest {
   @Test
   public void theBlockedMethodOfPedestrianSimTestHandlesOutOfBoundsParametersGracefully() {
     try {
-      PedestrianSim.getGlobalMap().blocked(null, -1, -1);
+      pedSim.getGlobalMap().blocked(null, -1, -1);
     } catch (Exception ex) {
       assumeNoException(ex);
     }

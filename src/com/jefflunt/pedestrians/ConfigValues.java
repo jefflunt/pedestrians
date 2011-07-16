@@ -1,11 +1,14 @@
 package com.jefflunt.pedestrians;
 
-/** Various config options for movers.
+/** Various configuration options for Pedestrians.
  */
 public class ConfigValues {
 
   /** The maximum precision by which floating point movement, acceleration, etc. are measured. */
   public static final float MAX_FLOATING_POINT_PRECISION = 0.001f;
+  
+  /** The number of milliseconds between saves of the tile map state. */
+  public static final long MILLIS_BETWEEN_TILEMAP_SAVES = 1000;
   
   /** Constant value representing up, like on a computer screen. */
   public static final int UP = 0;
@@ -30,6 +33,8 @@ public class ConfigValues {
   public static final float TILE_PUSH_RADIUS = 10;
   /** The maximum length of a path found by the path finder. */
   public static final int MAX_SEARCH_DEPTH = 1000;
+  /** The number of milliseconds between congestion calculations. */
+  public static final long MILLIS_BETWEEN_CONGESTION_CALCULATIONS = 50;
   
   /** The radius of a Pedestrian. Used for rendering, etc. */
   public static final float PEDESTRIAN_RADIUS = 3;

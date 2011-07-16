@@ -60,7 +60,6 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private String name;
   /** The color that this Pedestrian will use to be rendered. */
   private Color renderColor;
-
   
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
@@ -97,7 +96,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   public static void setGlobalTileMap(PedestrianTileBasedMap pedMap) {
     TILE_MAP = pedMap;
   }
-  
+    
   /** Gets this Pedestrian's unique ID.
    * 
    * @return the unique ID assigned to this Pedestrian.
@@ -178,21 +177,26 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       boolean collisionSteeringUsed = false;
       float speedMultiplier = 1.0f;
       
+      Pedestrian thePedestrianSensed = null;
+      boolean theRelativeTileIsBlocked = false;
+      
       // Basic delta and direction establishment
       Vector deltaVector = Vector.getVectorFromComponents(
           (float) (movementVector.getMagnitude()*Math.cos(getDirection())) * (timeSlice/1000.0f),
           (float) (movementVector.getMagnitude()*Math.sin(getDirection())) * (timeSlice/1000.0f));
   
       for (ObstacleSensor s : turningSensors) {
-        if ((s.relativeTileIsBlocked(TILE_MAP)) || (s.relativePointSensesPedestrian(TILE_MAP))) {
+        thePedestrianSensed = s.relativePointSensesPedestrian(TILE_MAP);
+        theRelativeTileIsBlocked = s.relativeTileIsBlocked(TILE_MAP);
+        if (theRelativeTileIsBlocked || (thePedestrianSensed != null)) {
           movementVector.setDirection(movementVector.getDirection()+(s.turnRate*(timeSlice/1000.0f)));
-          collisionSteeringUsed = true;
           speedMultiplier = s.speedMultiplier;
+          collisionSteeringUsed = true;
           break;
         }
       }
       
-      // Target steering
+      // Target steering - only done if collision steering was not used
       if (!collisionSteeringUsed) {
         float targetDirectionDelta = getDirectionToTarget() - getDirection();
         if (targetDirectionDelta < 0) {
@@ -215,8 +219,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       setCenterY(getCenterY() + (deltaVector.getYComponent()*speedMultiplier));
       
       lastTileMapBlock = getCoordinatesOfCurrentBlock();
-      TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).registerPedestrian(this);
     }
+    TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).registerPedestrian(this);
   }
   
   /** Gets the (x, y) coordinate of the block that this Pedestrian currently occupies.
@@ -575,7 +579,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     if (ConfigValues.renderTurnSensors) { 
       for (ObstacleSensor s : turningSensors) {
         Point2D.Float sensorLocation = getRelativePointFromCenter(s.rx, s.ry);
-        if ((s.relativeTileIsBlocked(TILE_MAP)) || ((s.relativePointSensesPedestrian(TILE_MAP)))) { 
+        if (s.relativeTileIsBlocked(TILE_MAP) || (s.relativePointSensesPedestrian(TILE_MAP) != null)) { 
           g.setColor(Color.white);
           g.fillOval(sensorLocation.x, sensorLocation.y, 4, 4);
         } else {
@@ -637,18 +641,19 @@ public class Pedestrian extends Circle implements Renderable, Mover {
      * @param tileMap the PedestrianTileBasedMap to use, to get the TileState, and the resulting list of Pedestrians in that tile
      * @return true if a Pedestrian is detected, false otherwise.
      */
-    public boolean relativePointSensesPedestrian(PedestrianTileBasedMap tileMap) {
+    public Pedestrian relativePointSensesPedestrian(PedestrianTileBasedMap tileMap) {
+      Pedestrian thePedestrianSensed = null;
       Point2D.Float relativePoint = pedestrian.getRelativePointFromCenter(rx, ry);
       LinkedList<Pedestrian> peds = tileMap.getTileStateAt((int) (relativePoint.x/ConfigValues.TILE_SIZE), (int) (relativePoint.y/ConfigValues.TILE_SIZE)).getRegisteredPedestrians();
       
-      boolean pedestrianOnThisPoint = false;
       for (Pedestrian p : peds) {
         if (Math.hypot(relativePoint.x - p.getCenterX(), relativePoint.y - p.getCenterY()) <= ConfigValues.PEDESTRIAN_RADIUS) {
-          pedestrianOnThisPoint = true;
+          thePedestrianSensed = p;
+          break;
         }
       }
       
-      return pedestrianOnThisPoint;
+      return thePedestrianSensed;
     }
     
   }
