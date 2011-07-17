@@ -61,6 +61,8 @@ public class PedestrianSim extends BasicGame {
                                (randomOpenTile.y*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
                                container);
     }
+    
+    tileMap.resetAllCongestionValues();
   }
 
   @Override
@@ -72,6 +74,7 @@ public class PedestrianSim extends BasicGame {
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       
       tileMap.permanentlyBlock(blockX, blockY);
+      tileMap.setDirty(true);
     }
     
     if (input.isMouseButtonDown(Input.MOUSE_RIGHT_BUTTON)) {
@@ -79,6 +82,7 @@ public class PedestrianSim extends BasicGame {
       int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
       
       tileMap.permanentlyOpen(blockX, blockY);
+      tileMap.setDirty(true);
     }
     
     if (input.isKeyDown(Input.KEY_F1)) {
@@ -94,6 +98,11 @@ public class PedestrianSim extends BasicGame {
     if (input.isKeyDown(Input.KEY_1)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         regenerateAllPedestrians(gc);
+        for (int x = 0; x < tileMap.getWidthInTiles(); x++) {
+          for (int y = 0; y < tileMap.getHeightInTiles(); y++) {
+            tileMap.getTileStateAt(x, y).clearRegisteredPedestrians();
+          }
+        }
       } 
     }
     

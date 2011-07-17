@@ -123,6 +123,15 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
     }
   }
   
+  /** Resets all congestion values on this PedestrianTileMap to zero. */
+  public void resetAllCongestionValues() {
+    for (int x = 0; x < blockingMap.length; x++) {
+      for (int y = 0; y < blockingMap[0].length; y++) {
+        blockingMap[x][y].resetCongestion();
+      }
+    }
+  }
+  
   /** Gets the coordinates of the center of the tile at (x, y).
    * 
    * @param x the x-coordinate of the tile in question

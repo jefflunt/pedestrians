@@ -37,23 +37,6 @@ public class TileState {
     this.blocked = blocked;
   }
   
-  /** Registers a Pedestrian, as claiming that they are currently inside this tile.
-   * 
-   * @param ped the Pedestrian claiming to be here.
-   */
-  public void registerPedestrian(Pedestrian ped) {
-    if (!pedestriansInThisTile.contains(ped))
-      pedestriansInThisTile.add(ped);
-  }
-  
-  /** If the specified Pedestrian is registered in this tile, they will be removed. If they are not currently registered in this tile, there is no effect.
-   * 
-   * @param ped the Pedestrian requesting to be unregistered.
-   */
-  public void unregisterPedestrian(Pedestrian ped) {
-    pedestriansInThisTile.remove(ped);
-  }
-  
   /** Recalculates the congestion level. */
   private void recalculateCongestion() {
     float momentaryCongestion = (pedestriansInThisTile.size()*2)+1;
@@ -74,6 +57,11 @@ public class TileState {
     return congestion;
   }
   
+  /** Sets the congestion on this tile to zero. */
+  public void resetCongestion() {
+    congestion = 0;
+  }
+  
   /** Gets a shallow copy of the Pedestrians registered with this tile. The LinkedList returned can be safely modified without breaking this tile's state.
    * 
    * @return A LinkedList containing all the currently registered Pedestrians for this tile.
@@ -81,6 +69,23 @@ public class TileState {
   @SuppressWarnings("unchecked")
   public LinkedList<Pedestrian> getRegisteredPedestrians() {
     return ((LinkedList<Pedestrian>)pedestriansInThisTile.clone());
+  }
+  
+  /** Registers a Pedestrian, as claiming that they are currently inside this tile.
+   * 
+   * @param ped the Pedestrian claiming to be here.
+   */
+  public void registerPedestrian(Pedestrian ped) {
+    if (!pedestriansInThisTile.contains(ped))
+      pedestriansInThisTile.add(ped);
+  }
+  
+  /** If the specified Pedestrian is registered in this tile, they will be removed. If they are not currently registered in this tile, there is no effect.
+   * 
+   * @param ped the Pedestrian requesting to be unregistered.
+   */
+  public void unregisterPedestrian(Pedestrian ped) {
+    pedestriansInThisTile.remove(ped);
   }
   
   /** Removes all Pedestrians from the list of registered Pedestrians. */
