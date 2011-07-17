@@ -67,6 +67,20 @@ public class PedestrianSim extends BasicGame {
   public void update(GameContainer gc, int delta) throws SlickException {
     Input input  = gc.getInput();
     
+    if (input.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON)) {
+      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
+      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
+      
+      tileMap.permanentlyBlock(blockX, blockY);
+    }
+    
+    if (input.isMouseButtonDown(Input.MOUSE_RIGHT_BUTTON)) {
+      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
+      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
+      
+      tileMap.permanentlyOpen(blockX, blockY);
+    }
+    
     if (input.isKeyDown(Input.KEY_F1)) {
       if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
         gc.setShowFPS(false);
@@ -112,18 +126,6 @@ public class PedestrianSim extends BasicGame {
         ConfigValues.renderPaths = false;
       } else {
         ConfigValues.renderPaths = true;
-      }
-    } 
-    
-    if (input.isKeyDown(Input.KEY_O)) {
-      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
-      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
-      tileMap.setDirty(true);
-      
-      if (input.isKeyDown(Input.KEY_LSHIFT) || input.isKeyDown(Input.KEY_RSHIFT)) {
-        tileMap.permanentlyBlock(blockX, blockY);
-      } else {
-        tileMap.permanentlyOpen(blockX, blockY);
       }
     } 
     
