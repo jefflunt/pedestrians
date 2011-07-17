@@ -35,6 +35,8 @@ public class ConfigValues {
   public static final int MAX_SEARCH_DEPTH = 1000;
   /** The number of milliseconds between congestion calculations. */
   public static final long MILLIS_BETWEEN_CONGESTION_CALCULATIONS = 50;
+  /** The number of movement history records the Pedestrians will keep. */
+  public static final int MOVEMENT_HISTORY_THRESHOLD = 7200;
   
   /** The radius of a Pedestrian. Used for rendering, etc. */
   public static final float PEDESTRIAN_RADIUS = 3;

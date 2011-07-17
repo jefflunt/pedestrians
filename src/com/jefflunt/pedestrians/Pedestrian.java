@@ -42,6 +42,8 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private float targetX;
   /** The y-coordinate of the current target point. */
   private float targetY;
+  /** The history of this Pedestrian's movement, a collection of MovementRecord objects. */
+  private LinkedList<MovementRecord> movementHistory;
   
   /** The Path that this Pedestrian is following. */
   private Path targetPath;
@@ -68,6 +70,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     movementVector = new Vector(0, STOPPED);
     targetX = x;
     targetY = y;
+    movementHistory = new LinkedList<MovementRecord>();
     targetPathIndex = 0;
     targetPath = null;
     uniqueID = claimNextUniqueID();
@@ -162,6 +165,9 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @param timeSlice The amount of time that has elapsed, in milliseconds.
    */
   public void move(long timeSlice) {
+    if (movementHistory.size() == ConfigValues.MOVEMENT_HISTORY_THRESHOLD)
+      movementHistory.removeLast();
+    
     TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).unregisterPedestrian(this);
     
     if (hasReachedDestination()) {
@@ -221,6 +227,12 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       lastTileMapBlock = getCoordinatesOfCurrentBlock();
     }
     TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).registerPedestrian(this);
+    movementHistory.add(new MovementRecord(getCenterX(), getCenterY(), getDirection()));
+  }
+  
+  /** Gets this Pedestrian's movement history. */
+  public LinkedList<MovementRecord> getMovementHistory() {
+    return movementHistory;
   }
   
   /** Gets the (x, y) coordinate of the block that this Pedestrian currently occupies.

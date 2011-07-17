@@ -198,7 +198,8 @@ public class PedestrianSim extends BasicGame {
     
     if (ConfigValues.renderSystemInfo) {
       g.setColor(Color.white);
-      g.drawString("MEM total(used): " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
+      g.drawString("MEM total(used):   " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
+      g.drawString("Ped. history size: " + (peds.length*peds[0].getMovementHistory().size()) + " nodes", 10, 40);
     }
     
     if (tileMap.isDirty()) {
