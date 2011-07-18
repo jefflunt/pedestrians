@@ -24,7 +24,7 @@ public class TileState {
     pedestriansInThisTile = new LinkedList<Pedestrian>();
     
     congestion = 0;
-    nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.MILLIS_BETWEEN_CONGESTION_CALCULATIONS;
+    nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.millisBetweenCongestionCalculations;
   }
   
   /** Gets whether or not this tile is blocked. */
@@ -51,7 +51,7 @@ public class TileState {
   public float getCongestion() {
     if (System.currentTimeMillis() > nextCongestionCalculationTime) {
       recalculateCongestion();
-      nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.MILLIS_BETWEEN_CONGESTION_CALCULATIONS;
+      nextCongestionCalculationTime = System.currentTimeMillis() + ConfigValues.millisBetweenCongestionCalculations;
     }
     
     return congestion;

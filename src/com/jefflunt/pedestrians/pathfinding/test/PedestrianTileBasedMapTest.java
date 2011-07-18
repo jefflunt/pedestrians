@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.awt.Point;
 import java.io.File;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,6 +43,8 @@ public class PedestrianTileBasedMapTest {
     
     pedMap = PedestrianTileBasedMap.loadTileMap("test.tilemap");
     assertNotNull(pedMap);
+    
+    tileMapFile.delete();
   }
   
 }

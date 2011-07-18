@@ -1,2 +1,5 @@
-*.tilemap
+default.tilemap
+test.tilemap
+pedestrians.conf
+test.conf
 

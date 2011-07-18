@@ -79,14 +79,14 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     lastTileMapBlock = getCoordinatesOfCurrentBlock();
     
     turningSensors = new ObstacleSensor[] {
-        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_TURN_RATE,   0.1f),
-        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_TURN_RATE,   0.1f),
-        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*1.5f,  ConfigValues.PEDESTRIAN_TURN_RATE/2, 0.5f),
-        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*1.5f, -ConfigValues.PEDESTRIAN_TURN_RATE/2, 0.5f),
-        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*2.5f,  ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
-        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*2.5f, -ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
-        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
-        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_TURN_RATE/3, 1),
+        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.pedestrianTurnRate,   0.1f),
+        new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.pedestrianTurnRate,   0.1f),
+        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*1.5f,  ConfigValues.pedestrianTurnRate/2, 0.5f),
+        new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*1.5f, -ConfigValues.pedestrianTurnRate/2, 0.5f),
+        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*2.5f,  ConfigValues.pedestrianTurnRate/3, 1),
+        new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*2.5f, -ConfigValues.pedestrianTurnRate/3, 1),
+        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.pedestrianTurnRate/3, 1),
+        new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.pedestrianTurnRate/3, 1),
     };
     
     this.container = container;
@@ -165,8 +165,9 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    * @param timeSlice The amount of time that has elapsed, in milliseconds.
    */
   public void move(long timeSlice) {
-    if (movementHistory.size() == ConfigValues.MOVEMENT_HISTORY_THRESHOLD)
+    while (movementHistory.size() >= ConfigValues.pedestrianMovementHistoryDepth) {
       movementHistory.removeLast();
+    }
     
     TILE_MAP.getTileStateAt(lastTileMapBlock.x, lastTileMapBlock.y).unregisterPedestrian(this);
     
@@ -214,9 +215,9 @@ public class Pedestrian extends Circle implements Renderable, Mover {
         
         if (targetDirectionDelta > Math.PI/4) {
           if (targetDirectionDelta < Math.PI) {
-            movementVector.setDirection(movementVector.getDirection()+(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
+            movementVector.setDirection(movementVector.getDirection()+(ConfigValues.pedestrianTurnRate*(timeSlice/1000.0f)));
           } else {
-            movementVector.setDirection(movementVector.getDirection()-(ConfigValues.PEDESTRIAN_TURN_RATE*(timeSlice/1000.0f)));
+            movementVector.setDirection(movementVector.getDirection()-(ConfigValues.pedestrianTurnRate*(timeSlice/1000.0f)));
           }
         }
       }
@@ -602,9 +603,13 @@ public class Pedestrian extends Circle implements Renderable, Mover {
       }
     }
     
-    g.setColor(renderColor);
-    g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
-    g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
+    if (ConfigValues.renderXRay) {
+      g.setColor(renderColor);
+      g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
+      g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
+    } else {
+      g.drawImage(PedestrianSim.getImageResource(2), getCenterX()-10, getCenterY()-16);
+    }
     
     if (ConfigValues.renderPedNames) {
       g.setColor(Color.white);
