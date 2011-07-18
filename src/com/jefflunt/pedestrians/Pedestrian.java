@@ -574,18 +574,18 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     if (ConfigValues.renderPaths) {
       if (isOnAPathSomewhere()) {
         g.setColor(Color.blue);
-        g.drawLine(getCenterX(), getCenterY(), getTargetX(), getTargetY());
+        g.drawLine(getCenterX()-ConfigValues.viewportX, getCenterY()-ConfigValues.viewportY, getTargetX()-ConfigValues.viewportX, getTargetY()-ConfigValues.viewportY);
         
         for (int i = targetPathIndex+1; i < targetPath.getLength(); i++) {
           if (i % 2 == 0)
             g.setColor(Color.cyan);
           else
             g.setColor(Color.orange);
-          g.drawLine(targetPath.getX(i), targetPath.getY(i), targetPath.getX(i-1), targetPath.getY(i-1));
+          g.drawLine(targetPath.getX(i)-ConfigValues.viewportX, targetPath.getY(i)-ConfigValues.viewportY, targetPath.getX(i-1)-ConfigValues.viewportX, targetPath.getY(i-1)-ConfigValues.viewportY);
         }
         
         g.setColor(Color.red);
-        g.fillOval(getTargetX(), getTargetY(), 2, 2);
+        g.fillOval(getTargetX()-ConfigValues.viewportX, getTargetY()-ConfigValues.viewportY, 2, 2);
       }
     }
     
@@ -594,26 +594,26 @@ public class Pedestrian extends Circle implements Renderable, Mover {
         Point2D.Float sensorLocation = getRelativePointFromCenter(s.rx, s.ry);
         if (s.relativeTileIsBlocked(TILE_MAP) || (s.relativePointSensesPedestrian(TILE_MAP) != null)) { 
           g.setColor(Color.white);
-          g.fillOval(sensorLocation.x, sensorLocation.y, 4, 4);
+          g.fillOval(sensorLocation.x-ConfigValues.viewportX, sensorLocation.y-ConfigValues.viewportY, 4, 4);
         } else {
           g.setColor(Color.green);
-          g.fillOval(sensorLocation.x, sensorLocation.y, 2, 2);
+          g.fillOval(sensorLocation.x-ConfigValues.viewportX, sensorLocation.y-ConfigValues.viewportY, 2, 2);
         }
         
       }
     }
     
-    if (ConfigValues.renderXRay) {
+    if (!ConfigValues.renderXRay) {
+      g.drawImage(PedestrianSim.getImageResource(2), x-10, y-16);
+    } else {
       g.setColor(renderColor);
       g.drawOval(x-radius, y-radius, 2*radius, 2*radius);
-      g.drawLine(getCenterX(), getCenterY(), (float) (getCenterX()+(5*(Math.cos(getDirection())))), (float) (getCenterY()+(5*(Math.sin(getDirection())))));
-    } else {
-      g.drawImage(PedestrianSim.getImageResource(2), getCenterX()-10, getCenterY()-16);
+      g.drawLine(x, y, (float) (x+(5*(Math.cos(getDirection())))), (float) (y+(5*(Math.sin(getDirection())))));
     }
     
     if (ConfigValues.renderPedNames) {
       g.setColor(Color.white);
-      g.drawString(name, getCenterX() + 8, getCenterY() - 10);
+      g.drawString(name, x+8, y-10);
     }
   }
   

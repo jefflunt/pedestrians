@@ -47,7 +47,7 @@ public class PedestrianSim extends BasicGame {
     container.setMinimumLogicUpdateInterval(10);
     
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
-      tileMap = new PedestrianTileBasedMap(container);
+      tileMap = new PedestrianTileBasedMap(1000, 1000);
       tileMap.randomizeObstacles();
     }
     
@@ -58,7 +58,7 @@ public class PedestrianSim extends BasicGame {
   }
   
   public void regenerateAllPedestrians(GameContainer container) {
-    peds = new Pedestrian[2000];
+    peds = new Pedestrian[1000];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
       peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
@@ -75,19 +75,72 @@ public class PedestrianSim extends BasicGame {
     if (delta > 33)
       delta = 33;
     
+    processInput(gc);
+    movePedestrians(delta);
+    saveTileMapIfNecessary();
+  }
+  
+  /** Checks to see if the tileMap has been marked as changes, and if so, saves an updated copy to disk. */
+  private void saveTileMapIfNecessary() {
+    if (System.currentTimeMillis() > nextTileMapSaveTime) {
+      if (tileMap.isDirty()) {
+        tileMap.save("default.tilemap");
+        tileMap.setDirty(false);
+      }
+      
+      nextTileMapSaveTime = System.currentTimeMillis() + ConfigValues.millisBetweenTilemapSaves;
+    }
+  }
+  
+  /** Tells the Pedestrians to do their movement.
+   * 
+   * @param delta the amount of time that has elapsed, in milliseconds
+   */
+  private void movePedestrians(int delta) {
+    for (Pedestrian ped : peds) {
+      if (!ped.isOnAPathSomewhere()) {
+        int randX;
+        int randY;
+        double distancetoWanderTarget;
+        
+        do {
+          randX = (int) (Math.random() * tileMap.getWidthInTiles());
+          randY = (int) (Math.random() * tileMap.getHeightInTiles());
+          distancetoWanderTarget = Math.hypot((ped.getCenterX()/ConfigValues.TILE_SIZE)-randX, (ped.getCenterY()/ConfigValues.TILE_SIZE)-randY);
+        } while (distancetoWanderTarget > 40);
+        
+        ped.headAlongPath(pathFinder.findPath(ped, 
+                                              (int) ped.getCenterX()/ConfigValues.TILE_SIZE,
+                                              (int) ped.getCenterY()/ConfigValues.TILE_SIZE, 
+                                              randX, 
+                                              randY), 
+                                              Pedestrian.WALKING_SPEED, 
+                                              true);
+      }
+      
+      ped.move(delta);
+    }
+  }
+  
+  /** Processes input from the keyboard and mouse.
+   * 
+   * @param gc the game container, from which you can get the Input object
+   * @throws SlickException in case something goes terribly wrong, such as the Input object not being available. Maybe will likely ensue if this happens.
+   */
+  private void processInput(GameContainer gc) throws SlickException {
     Input input  = gc.getInput();
     
     if (input.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON)) {
-      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
-      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
+      int blockX = (input.getMouseX()+ConfigValues.viewportX) / ConfigValues.TILE_SIZE;
+      int blockY = (input.getMouseY()+ConfigValues.viewportY) / ConfigValues.TILE_SIZE;
       
       tileMap.permanentlyBlock(blockX, blockY);
       tileMap.setDirty(true);
     }
     
     if (input.isMouseButtonDown(Input.MOUSE_RIGHT_BUTTON)) {
-      int blockX = input.getMouseX() / ConfigValues.TILE_SIZE;
-      int blockY = input.getMouseY() / ConfigValues.TILE_SIZE;
+      int blockX = (input.getMouseX()+ConfigValues.viewportX) / ConfigValues.TILE_SIZE;
+      int blockY = (input.getMouseY()+ConfigValues.viewportY) / ConfigValues.TILE_SIZE;
       
       tileMap.permanentlyOpen(blockX, blockY);
       tileMap.setDirty(true);
@@ -152,39 +205,26 @@ public class PedestrianSim extends BasicGame {
       } else {
         ConfigValues.renderPaths = true;
       }
-    } 
-    
-    for (Pedestrian ped : peds) {
-      if (!ped.isOnAPathSomewhere()) {
-        int randX;
-        int randY;
-        double distancetoWanderTarget;
-        
-        do {
-          randX = (int) (Math.random() * tileMap.getWidthInTiles());
-          randY = (int) (Math.random() * tileMap.getHeightInTiles());
-          distancetoWanderTarget = Math.hypot((ped.getCenterX()/ConfigValues.TILE_SIZE)-randX, (ped.getCenterY()/ConfigValues.TILE_SIZE)-randY);
-        } while (distancetoWanderTarget > 40);
-        
-        ped.headAlongPath(pathFinder.findPath(ped, 
-                                              (int) ped.getCenterX()/ConfigValues.TILE_SIZE,
-                                              (int) ped.getCenterY()/ConfigValues.TILE_SIZE, 
-                                              randX, 
-                                              randY), 
-                                              Pedestrian.WALKING_SPEED, 
-                                              true);
-      }
-      
-      ped.move(delta);
     }
     
-    if (System.currentTimeMillis() > nextTileMapSaveTime) {
-      if (tileMap.isDirty()) {
-        tileMap.save("default.tilemap");
-        tileMap.setDirty(false);
-      }
-      
-      nextTileMapSaveTime = System.currentTimeMillis() + ConfigValues.millisBetweenTilemapSaves;
+    if (input.isKeyDown(Input.KEY_UP)) {
+      if (ConfigValues.viewportY > 0)
+        ConfigValues.viewportY -= 10; 
+    }
+    
+    if (input.isKeyDown(Input.KEY_DOWN)) {
+      if (ConfigValues.viewportY < (tileMap.getHeightInTiles()*ConfigValues.TILE_SIZE)-gc.getHeight()+ConfigValues.HEIGHT_OF_CONTROL_PANEL)
+        ConfigValues.viewportY += 10; 
+    }
+    
+    if (input.isKeyDown(Input.KEY_LEFT)) {
+      if (ConfigValues.viewportX > 0)
+      ConfigValues.viewportX -= 10; 
+    }
+    
+    if (input.isKeyDown(Input.KEY_RIGHT)) {
+      if (ConfigValues.viewportX < (tileMap.getHeightInTiles()*ConfigValues.TILE_SIZE)-gc.getWidth())
+      ConfigValues.viewportX += 10; 
     }
   }
   
@@ -196,16 +236,16 @@ public class PedestrianSim extends BasicGame {
     
     LinkedList<Pedestrian> pedsToRender = null;
     
-    for (int x = 0; x < tileMap.getWidthInTiles(); x++) {
-      for (int y = 0; y < tileMap.getHeightInTiles(); y++) {
+    for (int x = (ConfigValues.viewportX/ConfigValues.TILE_SIZE)-1; x < tileMap.getWidthInTiles()+2; x++) {
+      for (int y = (ConfigValues.viewportY/ConfigValues.TILE_SIZE)-1; y < tileMap.getHeightInTiles()+2; y++) {
         if (tileMap.blocked(pathFinder, x, y)) {
-          g.drawImage(images[1], x*ConfigValues.TILE_SIZE, y*ConfigValues.TILE_SIZE-5);
+          g.drawImage(images[1], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE-5)-ConfigValues.viewportY);
         }
         
         pedsToRender = tileMap.getTileStateAt(x, y).getRegisteredPedestrians();
         
         for (Pedestrian ped : pedsToRender) {
-          ped.draw(ped.getCenterX(), ped.getCenterY());
+          ped.draw(ped.getCenterX()-ConfigValues.viewportX, ped.getCenterY()-ConfigValues.viewportY);
         }
         
         
@@ -220,7 +260,7 @@ public class PedestrianSim extends BasicGame {
             
             if (congestion > 1) {
               g.setColor(new Color(0, (int) (20*congestion), 0, 200));
-              g.fillRect(x*ConfigValues.TILE_SIZE, y*ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE);
+              g.fillRect((x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE)-ConfigValues.viewportY, ConfigValues.TILE_SIZE, ConfigValues.TILE_SIZE);
             }
           }
         }

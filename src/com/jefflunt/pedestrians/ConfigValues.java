@@ -67,6 +67,11 @@ public class ConfigValues {
   /** A flag that specifies whether or not to render in x-ray mode (Pedestrians with circles, and a direction, rather than a sprite). */
   public static boolean renderXRay = false;
   
+  /** The x-coordinate of the upper-left corner of the view port. */
+  public static int viewportX = 0;
+  /** The y-coordinate of the upper-left corner of the view port. */
+  public static int viewportY = 0;
+  
   /** Saves the values in this class to disk.
    * 
    * @param filename the name of the file in which to store the values.
@@ -89,6 +94,9 @@ public class ConfigValues {
       fileOut.writeBoolean(renderPedNames);
       fileOut.writeBoolean(renderTurnSensors);
       fileOut.writeBoolean(renderCongestion);
+      
+      fileOut.writeInt(viewportX);
+      fileOut.writeInt(viewportY);
       
       fileOut.flush();
       fileOut.close();
@@ -121,6 +129,9 @@ public class ConfigValues {
       renderPedNames    = fileIn.readBoolean();
       renderTurnSensors = fileIn.readBoolean();
       renderCongestion  = fileIn.readBoolean();
+      
+      viewportX = fileIn.readInt();
+      viewportY = fileIn.readInt();
       
       fileIn.close();
     } catch (IOException ioEx) {
