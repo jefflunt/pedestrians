@@ -47,7 +47,7 @@ public class PedestrianSim extends BasicGame {
     container.setMinimumLogicUpdateInterval(10);
     
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
-      tileMap = new PedestrianTileBasedMap(1000, 1000);
+      tileMap = new PedestrianTileBasedMap(500, 500);
       tileMap.randomizeObstacles();
     }
     
@@ -58,7 +58,7 @@ public class PedestrianSim extends BasicGame {
   }
   
   public void regenerateAllPedestrians(GameContainer container) {
-    peds = new Pedestrian[1000];
+    peds = new Pedestrian[500];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
       peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
@@ -236,24 +236,27 @@ public class PedestrianSim extends BasicGame {
     
     LinkedList<Pedestrian> pedsToRender = null;
     
-    for (int x = (ConfigValues.viewportX/ConfigValues.TILE_SIZE)-1; x < tileMap.getWidthInTiles()+2; x++) {
-      for (int y = (ConfigValues.viewportY/ConfigValues.TILE_SIZE)-1; y < tileMap.getHeightInTiles()+2; y++) {
+    int startX = (ConfigValues.viewportX/ConfigValues.TILE_SIZE) - 1;
+    int startY = (ConfigValues.viewportY/ConfigValues.TILE_SIZE) - 1;
+    
+    int stopX = startX + (container.getWidth()/ConfigValues.TILE_SIZE)  + 2;
+    int stopY = startY + (container.getHeight()/ConfigValues.TILE_SIZE) + 2;
+    
+    for (int x = startX; x < stopX; x++) {
+      for (int y = startY; y < stopY; y++) {
         if (tileMap.blocked(pathFinder, x, y)) {
           g.drawImage(images[1], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE-5)-ConfigValues.viewportY);
         }
-        
         pedsToRender = tileMap.getTileStateAt(x, y).getRegisteredPedestrians();
         
         for (Pedestrian ped : pedsToRender) {
           ped.draw(ped.getCenterX()-ConfigValues.viewportX, ped.getCenterY()-ConfigValues.viewportY);
         }
-        
-        
       }
     }
     
-    for (int x = 0; x < tileMap.getWidthInTiles(); x++) {
-      for (int y = 0; y < tileMap.getHeightInTiles(); y++) {
+    for (int x = startX; x < stopX; x++) {
+      for (int y = startY; y < stopY; y++) {
          if (!tileMap.blocked(pathFinder, x, y)) {
           if (ConfigValues.renderCongestion) {
             float congestion = tileMap.getTileStateAt(x, y).getCongestion();
