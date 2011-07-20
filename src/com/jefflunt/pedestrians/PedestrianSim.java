@@ -1,7 +1,6 @@
 package com.jefflunt.pedestrians;
 
 import java.awt.Point;
-import java.util.LinkedList;
 
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.Color;
@@ -58,7 +57,7 @@ public class PedestrianSim extends BasicGame {
   }
   
   public void regenerateAllPedestrians(GameContainer container) {
-    peds = new Pedestrian[500];
+    peds = new Pedestrian[1000];
     for (int i = 0; i < peds.length; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
       peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
@@ -234,8 +233,6 @@ public class PedestrianSim extends BasicGame {
       loadImageResources();
     }
     
-    LinkedList<Pedestrian> pedsToRender = null;
-    
     int startX = (ConfigValues.viewportX/ConfigValues.TILE_SIZE) - 1;
     int startY = (ConfigValues.viewportY/ConfigValues.TILE_SIZE) - 1;
     
@@ -245,20 +242,25 @@ public class PedestrianSim extends BasicGame {
     for (int x = startX; x < stopX; x++) {
       for (int y = startY; y < stopY; y++) {
         if (tileMap.blocked(pathFinder, x, y)) {
-          g.drawImage(images[1], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE-5)-ConfigValues.viewportY);
-        }
-        pedsToRender = tileMap.getTileStateAt(x, y).getRegisteredPedestrians();
-        
-        for (Pedestrian ped : pedsToRender) {
-          ped.draw(ped.getCenterX()-ConfigValues.viewportX, ped.getCenterY()-ConfigValues.viewportY);
-        }
+          g.drawImage(images[1], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE)-ConfigValues.viewportY);
+        } 
       }
     }
     
-    for (int x = startX; x < stopX; x++) {
-      for (int y = startY; y < stopY; y++) {
-         if (!tileMap.blocked(pathFinder, x, y)) {
-          if (ConfigValues.renderCongestion) {
+    for (Pedestrian ped : peds) {
+      if ((ped.getCenterX() >= ConfigValues.viewportX) && 
+          (ped.getCenterY() >= ConfigValues.viewportY) &&
+          (ped.getCenterX() <= ConfigValues.viewportX+container.getWidth()) &&
+          (ped.getCenterY() <= ConfigValues.viewportY+container.getHeight())) {
+       
+        ped.draw(ped.getCenterX()-ConfigValues.viewportX, ped.getCenterY()-ConfigValues.viewportY);
+      }
+    }
+    
+    if (ConfigValues.renderCongestion) {
+      for (int x = startX; x < stopX; x++) {
+        for (int y = startY; y < stopY; y++) {
+           if (!tileMap.blocked(pathFinder, x, y)) {
             float congestion = tileMap.getTileStateAt(x, y).getCongestion();
             
             if (congestion > 1) {
