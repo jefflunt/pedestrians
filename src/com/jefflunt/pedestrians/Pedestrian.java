@@ -604,7 +604,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     }
     
     if (!ConfigValues.renderXRay) {
-      g.drawImage(PedestrianSim.getImageResource(2), x-10, y-16);
+      g.drawImage(PedestrianSim.getImageResource(3), x-10, y-16);
     } else {
       g.setColor(renderColor);
       g.drawOval(x-radius, y-radius, 2*radius, 2*radius);

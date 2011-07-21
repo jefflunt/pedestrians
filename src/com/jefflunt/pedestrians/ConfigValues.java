@@ -19,7 +19,7 @@ public class ConfigValues {
   /** The maximum precision by which floating point movement, acceleration, etc. are measured. */
   public static final float MAX_FLOATING_POINT_PRECISION = 0.001f;
   /** The height, in pixels, of the control panel along the bottom of the screen. */
-  public static final int HEIGHT_OF_CONTROL_PANEL = 20;
+  public static final int HEIGHT_OF_CONTROL_PANEL = 50;
   
   /** Constant value representing up, like on a computer screen. */
   public static final int UP = 0;
@@ -48,6 +48,11 @@ public class ConfigValues {
   public static int pathFindingMaxSearchDepth = 1000;
   /** The number of movement history records the Pedestrians will keep. */
   public static int pedestrianMovementHistoryDepth = 1800;
+  
+  /** This variable allows the enabling/disabling of administrator controls in the UI. It is set to true via a command-line switch. */
+  public static boolean adminModeEnabled = false;
+  /** This variable allows the simulation to play/pause. */
+  public static boolean simPaused = false;
   
   /** The number of milliseconds between congestion calculations. */
   public static long millisBetweenCongestionCalculations = 50;

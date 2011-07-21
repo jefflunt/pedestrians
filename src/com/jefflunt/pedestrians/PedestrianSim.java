@@ -9,18 +9,24 @@ import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.gui.AbstractComponent;
+import org.newdawn.slick.gui.ComponentListener;
+import org.newdawn.slick.gui.MouseOverArea;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 
 /** The Pedestrian Simulation that handles the initial simulation state, logic, and rendering. */
-public class PedestrianSim extends BasicGame {
+public class PedestrianSim extends BasicGame implements ComponentListener {
   
   private Pedestrian[] peds;
   private PedestrianPathFinder pathFinder;
   private PedestrianTileBasedMap tileMap;
   private long nextTileMapSaveTime;
   private static Image[] images;
+  
+  private MouseOverArea playButton;
+  private MouseOverArea pauseButton;
   
   /** Creates a new simulation.
    * 
@@ -40,11 +46,21 @@ public class PedestrianSim extends BasicGame {
     return tileMap;
   }
   
-  @Override
-  public void init(GameContainer container) throws SlickException {
-    container.setShowFPS(ConfigValues.renderSystemInfo);
-    container.setMinimumLogicUpdateInterval(10);
+  public void initUI(GameContainer container) {
+    playButton = new MouseOverArea (container, images[0], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    pauseButton = new MouseOverArea(container, images[1], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
     
+    playButton.addListener(this);
+    playButton.setAcceptingInput(false);
+    
+    pauseButton.addListener(this);
+  }
+  
+  /** Restores the game state from disk, or creates a new game with default values.
+   * 
+   * @param container the game container
+   */
+  public void initGameState(GameContainer container) {
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
       tileMap = new PedestrianTileBasedMap(500, 500);
       tileMap.randomizeObstacles();
@@ -56,6 +72,18 @@ public class PedestrianSim extends BasicGame {
     regenerateAllPedestrians(container);
   }
   
+  @Override
+  public void init(GameContainer container) throws SlickException {
+    container.setShowFPS(false);
+    container.setMinimumLogicUpdateInterval(10);
+    
+    initGameState(container);
+  }
+  
+  /** Randomly places Pedestrians around the map.
+   * 
+   * @param container the game container, used to pass on to the individual Pedestrians, which is then used by the Pedestrian's draw method
+   */
   public void regenerateAllPedestrians(GameContainer container) {
     peds = new Pedestrian[1000];
     for (int i = 0; i < peds.length; i++) {
@@ -69,14 +97,28 @@ public class PedestrianSim extends BasicGame {
   }
 
   @Override
-  public void update(GameContainer gc, int delta) throws SlickException {
-    // if logic updates drop below 33 FPS, this will effectively slow down movement so coliision detection is still kept intact
-    if (delta > 33)
-      delta = 33;
+  public void componentActivated(AbstractComponent source) {
+    if (source == playButton) {
+      ConfigValues.simPaused = false;
+    } else if (source == pauseButton) {
+      ConfigValues.simPaused = true;
+    }
     
-    processInput(gc);
-    movePedestrians(delta);
-    saveTileMapIfNecessary();
+    playButton.setAcceptingInput(!playButton.isAcceptingInput());
+    pauseButton.setAcceptingInput(!playButton.isAcceptingInput());
+  }
+  
+  @Override
+  public void update(GameContainer gc, int delta) throws SlickException {
+    if (!ConfigValues.simPaused) {
+      // if logic updates drop below 33 FPS, this will effectively slow down movement so coliision detection is still kept intact
+      if (delta > 33)
+        delta = 33;
+      
+      processInput(gc);
+      movePedestrians(delta);
+      saveTileMapIfNecessary();
+    }
   }
   
   /** Checks to see if the tileMap has been marked as changes, and if so, saves an updated copy to disk. */
@@ -133,16 +175,20 @@ public class PedestrianSim extends BasicGame {
       int blockX = (input.getMouseX()+ConfigValues.viewportX) / ConfigValues.TILE_SIZE;
       int blockY = (input.getMouseY()+ConfigValues.viewportY) / ConfigValues.TILE_SIZE;
       
-      tileMap.permanentlyBlock(blockX, blockY);
-      tileMap.setDirty(true);
+      if (input.getMouseY() < gc.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL) {
+        tileMap.permanentlyBlock(blockX, blockY);
+        tileMap.setDirty(true);
+      }
     }
     
     if (input.isMouseButtonDown(Input.MOUSE_RIGHT_BUTTON)) {
       int blockX = (input.getMouseX()+ConfigValues.viewportX) / ConfigValues.TILE_SIZE;
       int blockY = (input.getMouseY()+ConfigValues.viewportY) / ConfigValues.TILE_SIZE;
       
-      tileMap.permanentlyOpen(blockX, blockY);
-      tileMap.setDirty(true);
+      if (input.getMouseY() < gc.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL) {
+        tileMap.permanentlyOpen(blockX, blockY);
+        tileMap.setDirty(true);
+      }
     }
     
     if (input.isKeyDown(Input.KEY_F1)) {
@@ -231,6 +277,7 @@ public class PedestrianSim extends BasicGame {
   public void render(GameContainer container, Graphics g) throws SlickException {
     if (images == null) {
       loadImageResources();
+      initUI(container);
     }
     
     int startX = (ConfigValues.viewportX/ConfigValues.TILE_SIZE) - 1;
@@ -242,7 +289,7 @@ public class PedestrianSim extends BasicGame {
     for (int x = startX; x < stopX; x++) {
       for (int y = startY; y < stopY; y++) {
         if (tileMap.blocked(pathFinder, x, y)) {
-          g.drawImage(images[1], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE)-ConfigValues.viewportY);
+          g.drawImage(images[2], (x*ConfigValues.TILE_SIZE)-ConfigValues.viewportX, (y*ConfigValues.TILE_SIZE)-ConfigValues.viewportY);
         } 
       }
     }
@@ -287,8 +334,10 @@ public class PedestrianSim extends BasicGame {
       g.drawString("Tile map changed..." , 3, 0);
     }
     
-    g.setColor(Color.darkGray);
-    g.fillRect(0, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL, container.getWidth(), ConfigValues.HEIGHT_OF_CONTROL_PANEL);
+    playButton.render(container, g);
+    if (pauseButton.isAcceptingInput()) {
+      pauseButton.render(container, g);
+    }
   }
   
   /** Gets an image at the specified resource.
@@ -305,11 +354,12 @@ public class PedestrianSim extends BasicGame {
    * @throws SlickException if there is a problem loading one of the images
    */
   public void loadImageResources() throws SlickException {
-    images = new Image[3];
+    images = new Image[4];
     
-    images[0] = new Image("images/controls/gear.png");
-    images[1] = new Image("images/tiles/stone.png");
-    images[2] = new Image("images/peds/ped.png");
+    images[0] = new Image("images/controls/play.png");
+    images[1] = new Image("images/controls/pause.png");
+    images[2] = new Image("images/tiles/stone.png");
+    images[3] = new Image("images/peds/ped.png");
   }
 
 }
