@@ -16,6 +16,7 @@ import org.newdawn.slick.gui.MouseOverArea;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
+import com.jefflunt.pedestrians.world.Clock;
 
 /** The Pedestrian Simulation that handles the initial simulation state, logic, and rendering. */
 public class PedestrianSim extends BasicGame implements ComponentListener {
@@ -27,6 +28,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   private PedestrianTileBasedMap tileMap;
   private long nextTileMapSaveTime;
   private static Image[] images;
+  private Clock timeOfDayClock;
   
   private MouseOverArea playButton;
   private MouseOverArea pauseButton;
@@ -71,6 +73,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @param container the game container
    */
   public void initGameState(GameContainer container) {
+    timeOfDayClock = new Clock(0);
     gc = container;
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
       tileMap = new PedestrianTileBasedMap(500, 500);
@@ -86,7 +89,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   @Override
   public void init(GameContainer container) throws SlickException {
     container.setShowFPS(false);
-    container.setMinimumLogicUpdateInterval(10);
+    container.setMinimumLogicUpdateInterval(20);
     
     initGameState(container);
   }
@@ -136,6 +139,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
       if (delta > 33)
         delta = 33;
       
+      timeOfDayClock.tickTock();
       processInput(gc);
       movePedestrians(delta);
       saveTileMapIfNecessary();
@@ -365,7 +369,8 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     addPedButton.render(container, g);
     removePedButton.render(container, g);
     g.setColor(new Color(1.0f, 1.0f, 1.0f));
-    g.drawString(peds.size()+"", 90, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+15);
+    g.drawString(timeOfDayClock.getDateTimeString(), 90, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    g.drawString(peds.size()+"", 90, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+25);
   }
   
   /** Gets an image at the specified resource.
