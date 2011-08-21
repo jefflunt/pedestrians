@@ -2,7 +2,6 @@ default.tilemap
 test.tilemap
 pedestrians.conf
 test.conf
-bin/*.class
 bin/
 .settings/
 .project
