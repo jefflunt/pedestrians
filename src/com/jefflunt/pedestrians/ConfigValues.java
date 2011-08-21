@@ -42,6 +42,8 @@ public class ConfigValues {
   // These values are intended to be changed by the simulation, at will. These are the default values.
   // Loading/saving is available to override the defaults.
   
+  /** The number of Pedestrians in the simulation. */
+  public static int totalPedestrians = 1000;
   /** The number of radians/second a Pedestrian will turn, at most. */
   public static float pedestrianTurnRate = (float) (3*Math.PI);
   /** The maximum length of a path found by the path finder. */
@@ -87,6 +89,7 @@ public class ConfigValues {
     try {
       ObjectOutputStream fileOut = new ObjectOutputStream(new FileOutputStream(filename));
       
+      fileOut.writeInt(totalPedestrians);
       fileOut.writeFloat(pedestrianTurnRate);
       fileOut.writeInt(pathFindingMaxSearchDepth);
       fileOut.writeInt(pedestrianMovementHistoryDepth);
@@ -122,6 +125,7 @@ public class ConfigValues {
     try {
       ObjectInputStream fileIn = new ObjectInputStream(new FileInputStream(filename));
       
+      totalPedestrians                = fileIn.readInt();
       pedestrianTurnRate              = fileIn.readFloat();
       pathFindingMaxSearchDepth       = fileIn.readInt();
       pedestrianMovementHistoryDepth  = fileIn.readInt();

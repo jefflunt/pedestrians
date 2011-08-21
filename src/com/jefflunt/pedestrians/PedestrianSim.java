@@ -1,6 +1,7 @@
 package com.jefflunt.pedestrians;
 
 import java.awt.Point;
+import java.util.LinkedList;
 
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.Color;
@@ -19,7 +20,9 @@ import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
 /** The Pedestrian Simulation that handles the initial simulation state, logic, and rendering. */
 public class PedestrianSim extends BasicGame implements ComponentListener {
   
-  private Pedestrian[] peds;
+  private GameContainer gc;
+  
+  private LinkedList<Pedestrian> peds;
   private PedestrianPathFinder pathFinder;
   private PedestrianTileBasedMap tileMap;
   private long nextTileMapSaveTime;
@@ -27,6 +30,8 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   
   private MouseOverArea playButton;
   private MouseOverArea pauseButton;
+  private MouseOverArea addPedButton;
+  private MouseOverArea removePedButton;
   
   /** Creates a new simulation.
    * 
@@ -47,13 +52,18 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   }
   
   public void initUI(GameContainer container) {
-    playButton = new MouseOverArea (container, images[0], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
-    pauseButton = new MouseOverArea(container, images[1], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    playButton      = new MouseOverArea(container, images[0], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    pauseButton     = new MouseOverArea(container, images[1], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    addPedButton    = new MouseOverArea(container, images[4], 45, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    removePedButton = new MouseOverArea(container, images[5], 45, addPedButton.getY()+20);
     
     playButton.addListener(this);
     playButton.setAcceptingInput(false);
     
     pauseButton.addListener(this);
+    
+    addPedButton.addListener(this);
+    removePedButton.addListener(this);
   }
   
   /** Restores the game state from disk, or creates a new game with default values.
@@ -61,6 +71,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @param container the game container
    */
   public void initGameState(GameContainer container) {
+    gc = container;
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
       tileMap = new PedestrianTileBasedMap(500, 500);
       tileMap.randomizeObstacles();
@@ -85,12 +96,14 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @param container the game container, used to pass on to the individual Pedestrians, which is then used by the Pedestrian's draw method
    */
   public void regenerateAllPedestrians(GameContainer container) {
-    peds = new Pedestrian[1000];
-    for (int i = 0; i < peds.length; i++) {
+    peds = new LinkedList<Pedestrian>();
+    
+    
+    for (int i = 0; i < ConfigValues.totalPedestrians; i++) {
       Point randomOpenTile = tileMap.getRandomOpenTile();
-      peds[i] = new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
-                               (randomOpenTile.y*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
-                               container);
+      peds.add(new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                              (randomOpenTile.y*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                               container));
     }
     
     tileMap.resetAllCongestionValues();
@@ -100,12 +113,20 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   public void componentActivated(AbstractComponent source) {
     if (source == playButton) {
       ConfigValues.simPaused = false;
+      playButton.setAcceptingInput(!playButton.isAcceptingInput());
+      pauseButton.setAcceptingInput(!playButton.isAcceptingInput());
     } else if (source == pauseButton) {
       ConfigValues.simPaused = true;
+      playButton.setAcceptingInput(!playButton.isAcceptingInput());
+      pauseButton.setAcceptingInput(!playButton.isAcceptingInput());
+    } else if (source == addPedButton)  {
+      Point randomOpenTile = tileMap.getRandomOpenTile();
+      peds.add(new Pedestrian((randomOpenTile.x*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                              (randomOpenTile.y*ConfigValues.TILE_SIZE) + (ConfigValues.TILE_SIZE/2),
+                               gc));
+    } else if (source == removePedButton) {
+      peds.removeLast();
     }
-    
-    playButton.setAcceptingInput(!playButton.isAcceptingInput());
-    pauseButton.setAcceptingInput(!playButton.isAcceptingInput());
   }
   
   @Override
@@ -324,7 +345,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
       g.fillRect(0, 0, 300, 70);
       g.setColor(Color.white);
       g.drawString("MEM total(used):   " + (Runtime.getRuntime().totalMemory()/1000000) + "(" + ((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1000000) + ") MB", 10, 25);
-      g.drawString("Ped. history size: " + (peds.length*peds[0].getMovementHistory().size()) + " nodes", 10, 40);
+      g.drawString("Ped. history size: " + (peds.size()*peds.get(0).getMovementHistory().size()) + " nodes", 10, 40);
     }
     
     if (tileMap.isDirty()) {
@@ -338,6 +359,13 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     if (pauseButton.isAcceptingInput()) {
       pauseButton.render(container, g);
     }
+    
+    g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.25f));
+    g.fillRect(45, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5, 40, 40);
+    addPedButton.render(container, g);
+    removePedButton.render(container, g);
+    g.setColor(new Color(1.0f, 1.0f, 1.0f));
+    g.drawString(peds.size()+"", 90, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+15);
   }
   
   /** Gets an image at the specified resource.
@@ -354,12 +382,14 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @throws SlickException if there is a problem loading one of the images
    */
   public void loadImageResources() throws SlickException {
-    images = new Image[4];
+    images = new Image[6];
     
     images[0] = new Image("images/controls/play.png");
     images[1] = new Image("images/controls/pause.png");
     images[2] = new Image("images/tiles/stone.png");
     images[3] = new Image("images/peds/ped.png");
+    images[4] = new Image("images/peds/ped_add.png");
+    images[5] = new Image("images/peds/ped_remove.png");
   }
 
 }
