@@ -3,6 +3,7 @@ package com.jefflunt.pedestrians.test;
 import static org.junit.Assert.*;
 
 import java.awt.geom.Point2D;
+import java.io.File;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +19,24 @@ public class PedestrianTest {
   @Before
   public void setUp() {
     simon = new Pedestrian(0, 0, null);
+  }
+  
+  @Test
+  public void aPedestrianCanBeLoadedFromDiskWithoutError() {
+    File loadFile = new File("ped_load_file");
+    simon.save("ped_load_file");
+    
+    Pedestrian simonResurrected = Pedestrian.load("ped_load_file", null);
+    assertNotNull(simonResurrected);
+    loadFile.delete();
+  }
+  
+  @Test
+  public void aPedestrianCanBeSavedWithoutError() {
+    File saveFile = new File("ped_save_file");
+    assertTrue(simon.save("ped_save_file"));
+    
+    saveFile.delete();
   }
   
   @Test
