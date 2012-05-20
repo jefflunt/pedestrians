@@ -3,13 +3,23 @@ package com.jefflunt.pedestrians.test;
 import static org.junit.Assert.*;
 
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.newdawn.slick.Color;
+import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.util.pathfinding.Path;
 
 import com.jefflunt.pedestrians.ConfigValues;
 import com.jefflunt.pedestrians.Pedestrian;
+import com.jefflunt.pedestrians.physics.Vector;
 
 public class PedestrianTest {
 
@@ -18,6 +28,46 @@ public class PedestrianTest {
   @Before
   public void setUp() {
     simon = new Pedestrian(0, 0, null);
+  }
+  
+  @Test
+  public void savingAndLoadingOfPedestriansEnablesSuccessfulPersistence() {
+    File pedFile = new File("test_ped.ped");
+    
+    float x = (float)(Math.random() * 500);
+    float y = (float)(Math.random() * 500);
+    Pedestrian testPed = new Pedestrian(x, y, null);
+    
+    try {
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(pedFile)); 
+      testPed.save(oos);
+      oos.close();
+      
+      Pedestrian reloadedPed = new Pedestrian(new ObjectInputStream(new FileInputStream(pedFile)), null);
+      
+      assertEquals(testPed.getCenterX(), reloadedPed.getCenterX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+      assertEquals(testPed.getCenterY(), reloadedPed.getCenterY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+      assertEquals(testPed.getTargetX(), reloadedPed.getTargetX(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+      assertEquals(testPed.getTargetY(), reloadedPed.getTargetY(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+      
+      assertEquals(testPed.getUniqueID(), reloadedPed.getUniqueID());
+      assertEquals(testPed.getName(), reloadedPed.getName());
+      
+      assertEquals(testPed.getRenderColor().getRed(),   reloadedPed.getRenderColor().getRed());
+      assertEquals(testPed.getRenderColor().getGreen(), reloadedPed.getRenderColor().getGreen());
+      assertEquals(testPed.getRenderColor().getBlue(),  reloadedPed.getRenderColor().getBlue());
+      
+      assertEquals(testPed.getDirection(),  reloadedPed.getDirection(), ConfigValues.MAX_FLOATING_POINT_PRECISION);
+      assertEquals(testPed.getSpeed(),      reloadedPed.getSpeed(),     ConfigValues.MAX_FLOATING_POINT_PRECISION);
+    } catch (ClassNotFoundException cnfEx) {
+      cnfEx.printStackTrace();
+      fail();
+    } catch (IOException ioEx) {
+      ioEx.printStackTrace();
+      fail();
+    }
+    
+    pedFile.delete();
   }
   
   @Test

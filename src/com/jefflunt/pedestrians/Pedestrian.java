@@ -2,6 +2,9 @@ package com.jefflunt.pedestrians;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 
 import org.newdawn.slick.Color;
@@ -63,22 +66,56 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   /** The color that this Pedestrian will use to be rendered in x-ray mode. */
   private Color renderColor;
   
+  /** Loads a Pedestrian from the ObjectInputStream
+   * 
+   * @param ois The ObjectInputStream from which the Pedestrian data is read.
+   * @throws IOException if the ObjectInputStream presents data that is malformed.
+   * @throws ClassNotFoundException if the name of the Pedestrian, as presented by the ObjectInputStream, is malformed.
+   */
+  public Pedestrian(ObjectInputStream ois, GameContainer container) throws IOException, ClassNotFoundException {
+    super(0, 0, ConfigValues.PEDESTRIAN_RADIUS);
+    
+    x = ois.readFloat();
+    y = ois.readFloat();
+    targetX = ois.readFloat();
+    targetY = ois.readFloat();
+    targetPathIndex = 0;
+    targetPath = null;
+    
+    uniqueID = ois.readInt();
+    name = (String)(ois.readObject());
+    renderColor = new Color(ois.readInt(), ois.readInt(), ois.readInt());
+    
+    movementVector = new Vector(ois.readFloat(), ois.readFloat());
+    
+    lastTileMapBlock = getCoordinatesOfCurrentBlock();
+    turningSensors = buildObstacleSensors();
+    this.container = container;
+  }
+  
   /** Creates a new Pedestrian */
   public Pedestrian(float x, float y, GameContainer container) {
     super(x, y, ConfigValues.PEDESTRIAN_RADIUS);
     
-    movementVector = new Vector(0, STOPPED);
     targetX = x;
     targetY = y;
-    movementHistory = new LinkedList<MovementRecord>();
     targetPathIndex = 0;
     targetPath = null;
+    
     uniqueID = claimNextUniqueID();
     name = ConfigValues.randomNames[(int) (Math.random()*ConfigValues.randomNames.length)];
     renderColor = new Color((int) (Math.random()*150)+100, (int) (Math.random()*150)+100, (int) (Math.random()*150)+100);
-    lastTileMapBlock = getCoordinatesOfCurrentBlock();
     
-    turningSensors = new ObstacleSensor[] {
+    movementVector = new Vector(0, STOPPED);
+    movementHistory = new LinkedList<MovementRecord>();
+    
+    lastTileMapBlock = getCoordinatesOfCurrentBlock();
+    turningSensors = buildObstacleSensors();
+    this.container = container;
+  }
+  
+  private ObstacleSensor[] buildObstacleSensors() {
+    return (new ObstacleSensor[] {
         new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.pedestrianTurnRate,   0.1f),
         new ObstacleSensor(this,   ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.pedestrianTurnRate,   0.1f),
         new ObstacleSensor(this, 2*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS*1.5f,  ConfigValues.pedestrianTurnRate/2, 0.5f),
@@ -87,9 +124,30 @@ public class Pedestrian extends Circle implements Renderable, Mover {
         new ObstacleSensor(this, 3*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS*2.5f, -ConfigValues.pedestrianTurnRate/3, 1),
         new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.pedestrianTurnRate/3, 1),
         new ObstacleSensor(this, 4*ConfigValues.PEDESTRIAN_RADIUS,       ConfigValues.PEDESTRIAN_RADIUS,      -ConfigValues.pedestrianTurnRate/3, 1),
-    };
+    });
+  }
+  
+  /** Allows the saving of Pedestrian state to an ObjectOutputStream.
+   * 
+   * @param oos The ObjectOutputStream to which we're saving the Pedestrian state.
+   * @throws IOException  if an I/O failure occurs during output.
+   */
+  public void save(ObjectOutputStream oos) throws IOException {
+    oos.writeFloat(x);
+    oos.writeFloat(y);
+    oos.writeFloat(targetX);
+    oos.writeFloat(targetY);
     
-    this.container = container;
+    oos.writeInt(uniqueID);
+    oos.writeObject(name);
+    
+    // Write the components of the render color
+    oos.writeInt(renderColor.getRed());
+    oos.writeInt(renderColor.getGreen());
+    oos.writeInt(renderColor.getBlue());
+    
+    oos.writeFloat(movementVector.getDirection());
+    oos.writeFloat(movementVector.getMagnitude());
   }
   
   /** Gets the PedestrianTileBasedMap that all Pedestrians will use.
@@ -495,6 +553,14 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return movementVector.getDirection();
   }
   
+  /** Gets this Pedestrian's current speed.
+   * 
+   * @return this Pedestrian's current speed.
+   */
+  public float getSpeed() {
+    return movementVector.getMagnitude();
+  }
+  
   /** Gets the direction from this Pedestrian's current location, toward their target location.
    * 
    * @return the direction, measured in radians, from the Pedestrian to their target location.
@@ -533,14 +599,6 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     return primaryDirection;
   }
   
-  /** Gets this Pedestrian's current speed.
-   * 
-   * @return this Pedestrian's current speed.
-   */
-  public float getSpeed() {
-    return movementVector.getMagnitude();
-  }
-  
   /** Gets the x-coordinate of this Pedestrian's current target location.
    * 
    * @return the x-coordinate of the location to which this Pedestrian is traveling.
@@ -555,6 +613,16 @@ public class Pedestrian extends Circle implements Renderable, Mover {
    */
   public float getTargetY() {
     return targetY;
+  }
+  
+  /** Gets the name for this Pedestrian. */
+  public String getName() {
+    return name;
+  }
+  
+  /** Gets the render color for this Pedestrian. */
+  public Color getRenderColor() {
+    return renderColor;
   }
   
   /** Sets this Pedestrian's new targetLocation.
