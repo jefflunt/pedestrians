@@ -13,6 +13,7 @@ import org.newdawn.slick.SlickException;
 import org.newdawn.slick.gui.AbstractComponent;
 import org.newdawn.slick.gui.ComponentListener;
 import org.newdawn.slick.gui.MouseOverArea;
+import org.newdawn.slick.util.Log;
 
 import com.jefflunt.pedestrians.pathfinding.PedestrianPathFinder;
 import com.jefflunt.pedestrians.pathfinding.PedestrianTileBasedMap;
@@ -51,19 +52,13 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     return tileMap;
   }
   
-  public void initUI(GameContainer container) {
-    playButton      = new MouseOverArea(container, images[0], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
-    pauseButton     = new MouseOverArea(container, images[1], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
-    addPedButton    = new MouseOverArea(container, images[4], 45, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
-    removePedButton = new MouseOverArea(container, images[5], 45, addPedButton.getY()+20);
+  @Override
+  public void init(GameContainer container) throws SlickException {
+    Log.info("Initializing game objects");
+    container.setShowFPS(false);
+    container.setMinimumLogicUpdateInterval(10);
     
-    playButton.addListener(this);
-    playButton.setAcceptingInput(false);
-    
-    pauseButton.addListener(this);
-    
-    addPedButton.addListener(this);
-    removePedButton.addListener(this);
+    initGameState(container);
   }
   
   /** Restores the game state from disk, or creates a new game with default values.
@@ -71,6 +66,8 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @param container the game container
    */
   public void initGameState(GameContainer container) {
+    Log.info("Initializing game state");
+    
     gc = container;
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
       tileMap = new PedestrianTileBasedMap(500, 500);
@@ -83,12 +80,22 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     regenerateAllPedestrians(container);
   }
   
-  @Override
-  public void init(GameContainer container) throws SlickException {
-    container.setShowFPS(false);
-    container.setMinimumLogicUpdateInterval(10);
+  /** Sets up the UI components and event listeners. */
+  public void initUI(GameContainer container) {
+    Log.info("Setting up UI components, buttons, and listeners");
     
-    initGameState(container);
+    playButton      = new MouseOverArea(container, images[0], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    pauseButton     = new MouseOverArea(container, images[1], 5, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    addPedButton    = new MouseOverArea(container, images[4], 45, container.getHeight()-ConfigValues.HEIGHT_OF_CONTROL_PANEL+5);
+    removePedButton = new MouseOverArea(container, images[5], 45, addPedButton.getY()+20);
+    
+    playButton.addListener(this);
+    playButton.setAcceptingInput(false);
+    
+    pauseButton.addListener(this);
+    
+    addPedButton.addListener(this);
+    removePedButton.addListener(this);
   }
   
   /** Randomly places Pedestrians around the map.
@@ -132,7 +139,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   @Override
   public void update(GameContainer gc, int delta) throws SlickException {
     if (!ConfigValues.simPaused) {
-      // if logic updates drop below 33 FPS, this will effectively slow down movement so coliision detection is still kept intact
+      // if logic updates drop below 33 FPS, this will effectively slow down movement so collision detection is still kept intact
       if (delta > 33)
         delta = 33;
       
@@ -299,6 +306,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     if (images == null) {
       loadImageResources();
       initUI(container);
+      Log.info("Rendering first frame");
     }
     
     int startX = (ConfigValues.viewportX/ConfigValues.TILE_SIZE) - 1;
@@ -382,6 +390,8 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
    * @throws SlickException if there is a problem loading one of the images
    */
   public void loadImageResources() throws SlickException {
+    Log.info("Loading images and sprites");
+    
     images = new Image[6];
     
     images[0] = new Image("images/controls/play.png");
