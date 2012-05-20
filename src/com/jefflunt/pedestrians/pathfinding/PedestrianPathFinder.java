@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.newdawn.slick.util.Log;
 import org.newdawn.slick.util.pathfinding.AStarHeuristic;
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
