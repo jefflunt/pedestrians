@@ -43,7 +43,7 @@ public class ConfigValues {
   // Loading/saving is available to override the defaults.
   
   /** The number of Pedestrians in the simulation. */
-  public static int totalPedestrians = 5000;
+  public static int totalPedestrians = 4000;
   /** The number of radians/second a Pedestrian will turn, at most. */
   public static float pedestrianTurnRate = (float) (3*Math.PI);
   /** The maximum length of a path found by the path finder. */

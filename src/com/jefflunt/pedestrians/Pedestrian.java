@@ -58,9 +58,9 @@ public class Pedestrian extends Circle implements Renderable, Mover {
   private Point lastTileMapBlock;
   /** This Pedestrian's unique ID. */
   private int uniqueID;
-  /** This Pedestrian's name (does not have to be unique. */
+  /** This Pedestrian's name (does not have to be unique). */
   private String name;
-  /** The color that this Pedestrian will use to be rendered. */
+  /** The color that this Pedestrian will use to be rendered in x-ray mode. */
   private Color renderColor;
   
   /** Creates a new Pedestrian */
