@@ -226,7 +226,7 @@ public class PedestrianTileBasedMap implements ExtendedTileBasedMap {
     
     for (int x = 4; x < blockingMap.length-4; x++) {
       for (int y = 4; y < blockingMap[0].length-4; y++) {
-        int blockSize = ((int) (Math.random() * 20));
+        int blockSize = ((int) (Math.random() * 200));
         switch (blockSize) {
           case 1:
             blockingMap[x][y].setIsBlocked(true);

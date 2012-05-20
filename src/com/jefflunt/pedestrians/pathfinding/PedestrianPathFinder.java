@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.newdawn.slick.util.Log;
 import org.newdawn.slick.util.pathfinding.AStarHeuristic;
 import org.newdawn.slick.util.pathfinding.Mover;
 import org.newdawn.slick.util.pathfinding.Path;
@@ -85,7 +86,6 @@ public class PedestrianPathFinder implements PathFinder, PathFindingContext {
    */
   public Path findPath(Mover mover, int sx, int sy, int tx, int ty) {
     current = null;
-    
     // easy first check, if the destination is blocked, we can't get there
     this.mover = mover;
     this.sourceX = tx;

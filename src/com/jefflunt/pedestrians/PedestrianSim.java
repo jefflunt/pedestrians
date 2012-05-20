@@ -55,6 +55,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
   @Override
   public void init(GameContainer container) throws SlickException {
     Log.info("Initializing game objects");
+    container.setTargetFrameRate(100);
     container.setShowFPS(false);
     container.setMinimumLogicUpdateInterval(10);
     
@@ -70,7 +71,7 @@ public class PedestrianSim extends BasicGame implements ComponentListener {
     
     gc = container;
     if ((tileMap = PedestrianTileBasedMap.loadTileMap("default.tilemap")) == null) {
-      tileMap = new PedestrianTileBasedMap(500, 500);
+      tileMap = new PedestrianTileBasedMap(100, 100);
       tileMap.randomizeObstacles();
     }
     
