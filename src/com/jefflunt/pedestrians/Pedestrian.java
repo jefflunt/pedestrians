@@ -87,6 +87,7 @@ public class Pedestrian extends Circle implements Renderable, Mover {
     renderColor = new Color(ois.readInt(), ois.readInt(), ois.readInt());
     
     movementVector = new Vector(ois.readFloat(), ois.readFloat());
+    movementHistory = new LinkedList<MovementRecord>();
     
     lastTileMapBlock = getCoordinatesOfCurrentBlock();
     turningSensors = buildObstacleSensors();

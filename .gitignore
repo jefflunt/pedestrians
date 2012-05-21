@@ -1,4 +1,5 @@
 default.tilemap
+pedestrian.state
 test.tilemap
 pedestrians.conf
 test.conf

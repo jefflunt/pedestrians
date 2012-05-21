@@ -73,6 +73,8 @@ public class ConfigValues {
   public static boolean renderCongestion = false;
   /** A flag that specifies whether or not to render in x-ray mode (Pedestrians with circles, and a direction, rather than a sprite). */
   public static boolean renderXRay = false;
+  /** A flag that specifies whether or not to render the notice about the game state being saved. */
+  public static boolean renderSavingPedsNotice = false;
   
   /** The x-coordinate of the upper-left corner of the view port. */
   public static int viewportX = 0;
