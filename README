@@ -1,7 +1,4 @@
-As of 2013-08-29, pedestrian development has been officially retired (as opposed to unofficially up to this point).
-It's a decent tech demo, and a good place to start if you're interested in seeing a working Slick2d project, or want
-to see how one might implement exponential resistence-based turning and avoidance systems, but my plans for pedestrians
-itself (and projects based on similar ideas) have changed in the last month.
+As of 2013-08-29, pedestrian development has been officially retired (as opposed to unofficially up to this point). It's a decent tech demo, and a good place to start if you're interested in seeing a working Slick2d project, or want to see how one might implement exponential resistence-based turning and avoidance systems, but my plans for pedestrians itself (and projects based on similar ideas) have changed in the last month.
 
 ====================
 
