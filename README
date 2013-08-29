@@ -1,7 +1,9 @@
 As of 2013-08-29, pedestrian development has been officially retired (as opposed to unofficially up to this point).
-It's a decen tech demo, and a good place to start if you're interested in seeing a working Slick2d project, or want
-to see how one might implement exponential resistence-based turning and avoidance systems, but my plans for it have
-changed in the last month.
+It's a decent tech demo, and a good place to start if you're interested in seeing a working Slick2d project, or want
+to see how one might implement exponential resistence-based turning and avoidance systems, but my plans for pedestrians
+itself (and projects based on similar ideas) have changed in the last month.
+
+====================
 
 Pedestrians is a simulator for pedestrian movement. It's fun, it's light, it's a tech demo at this point.
 
@@ -10,5 +12,3 @@ As of July 2011, the project has been in development for barely more than a mont
 2. A number of pedestrians are randomly generated and placed around the world.
 3. The world is full of randomly placed obstacles (red blocks)
 4. Pedestrians avoid running into/through these blocks, as well as other pedestrians
-
-The project is being built with all three major desktop OS's in mind: Mac OS, Linux, and Windows.
